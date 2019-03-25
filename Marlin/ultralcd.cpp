@@ -172,13 +172,15 @@ uint16_t max_display_update_time = 0;
   ////////////////////////////////////////////
 
   void lcd_main_menu();
-  void lcd_tune_menu();
+  #if DISABLED(SLIM_LCD_MENUS)
+    void lcd_control_menu();
+    void lcd_move_menu();
+    void lcd_control_motion_menu();
+    void lcd_control_temperature_menu();
+  #endif
   void lcd_prepare_menu();
-  void lcd_move_menu();
-  void lcd_control_menu();
-  void lcd_control_temperature_menu();
-  void lcd_control_motion_menu();
-
+  void lcd_tune_menu();
+  
   #if DISABLED(SLIM_LCD_MENUS)
     void lcd_control_temperature_preheat_material1_settings_menu();
     void lcd_control_temperature_preheat_material2_settings_menu();
@@ -1109,12 +1111,16 @@ void lcd_quick_feedback(const bool clear_buttons) {
         MENU_ITEM_EDIT_CALLBACK(bool, MSG_CASE_LIGHT, (bool*)&case_light_on, update_case_light);
     #endif
 
-    if (planner.movesplanned() || IS_SD_PRINTING)
+    if (planner.movesplanned() || IS_SD_PRINTING) {
       MENU_ITEM(submenu, MSG_TUNE, lcd_tune_menu);
-    else
+    }
+    else {
       MENU_ITEM(submenu, MSG_PREPARE, lcd_prepare_menu);
+    }
 
-    MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
+    #if DISABLED(SLIM_LCD_MENUS)
+      MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
+    #endif
 
     #if ENABLED(SDSUPPORT)
       if (card.cardOK) {
@@ -2660,10 +2666,12 @@ void lcd_quick_feedback(const bool clear_buttons) {
     //
     // Move Axis
     //
-    #if ENABLED(DELTA)
-      if (all_axes_homed())
+    #if DISABLED(SLIM_LCD_MENUS)
+      #if ENABLED(DELTA)
+        if (all_axes_homed())
+      #endif
+          MENU_ITEM(submenu, MSG_MOVE_AXIS, lcd_move_menu);
     #endif
-        MENU_ITEM(submenu, MSG_MOVE_AXIS, lcd_move_menu);
 
     //
     // Auto Home
@@ -3331,8 +3339,11 @@ void lcd_quick_feedback(const bool clear_buttons) {
   void lcd_control_menu() {
     START_MENU();
     MENU_BACK(MSG_MAIN);
-    MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
-    MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
+    
+    #if DISABLED(SLIM_LCD_MENUS)
+      MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
+      MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
+    #endif
 
     #if DISABLED(NO_VOLUMETRICS) || ENABLED(ADVANCED_PAUSE_FEATURE)
       MENU_ITEM(submenu, MSG_FILAMENT, lcd_control_filament_menu);

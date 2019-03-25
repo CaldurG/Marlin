@@ -242,7 +242,7 @@ static void lcd_setFont(const char font_nr) {
 }
 
 void lcd_print(const char c) {
-  if (WITHIN(c, 1, LCD_STR_SPECIAL_MAX)) {
+  if (WITHIN(c, 0, LCD_STR_SPECIAL_MAX)) {
     u8g.setFont(FONT_SPECIAL_NAME);
     u8g.print(c);
     lcd_setFont(currentfont);
@@ -251,7 +251,7 @@ void lcd_print(const char c) {
 }
 
 char lcd_print_and_count(const char c) {
-  if (WITHIN(c, 1, LCD_STR_SPECIAL_MAX)) {
+  if (WITHIN(c, 0, LCD_STR_SPECIAL_MAX)) {
     u8g.setFont(FONT_SPECIAL_NAME);
     u8g.print(c);
     lcd_setFont(currentfont);
@@ -273,9 +273,9 @@ void lcd_print_utf(const char *str, uint8_t n=LCD_WIDTH) {
   while (n && (c = *str)) n -= charset_mapper(c), ++str;
 }
 
-void lcd_printPGM_utf(const char *str, uint8_t n=LCD_WIDTH) {
+void lcd_printPGM_utf(const char *str, int16_t n=LCD_WIDTH) {
   char c;
-  while (n && (c = pgm_read_byte(str))) n -= charset_mapper(c), ++str;
+  while ((n > 0) && (c = pgm_read_byte(str))) n -= charset_mapper(c), ++str;
 }
 
 #if ENABLED(SHOW_BOOTSCREEN)

@@ -115,7 +115,7 @@
 #define ENABLED(b) _CAT(SWITCH_ENABLED_, b)
 #define DISABLED(b) !ENABLED(b)
 
-#define WITHIN(V,L,H) ((V) >= (L) && (V) <= (H))
+#define WITHIN(V,L,H) (((V) >= (L)) && ((V) <= (H)))
 #define NUMERIC(a) WITHIN(a, '0', '9')
 #define DECIMAL(a) (NUMERIC(a) || a == '.')
 #define NUMERIC_SIGNED(a) (NUMERIC(a) || (a) == '-' || (a) == '+')

@@ -181,7 +181,7 @@ inline void lcd_implementation_status_message(const bool blink) {
     }
   #else
     UNUSED(blink);
-
+    
     // Get the UTF8 character count of the string
     uint8_t slen = utf8_strlen(lcd_status_message);
 
@@ -349,8 +349,12 @@ static void lcd_implementation_status_screen() {
     if (PAGE_CONTAINS(41, 48)) {
       char buffer[10];
       duration_t elapsed = print_job_timer.duration();
-      bool has_days = (elapsed.value >= 60*60*24L);
-      uint8_t len = elapsed.toDigital(buffer, has_days);
+      #if ENABLED(STATUS_SCREEN_DAYS)
+        uint8_t len = elapsed.toDigital(buffer, elapsed.value >= 60*60*24L);
+      #else
+        uint8_t len = elapsed.toDigital(buffer);
+      #endif
+      
       u8g.setPrintPos(SD_DURATION_X, 48);
       lcd_print(buffer);
     }
@@ -361,106 +365,110 @@ static void lcd_implementation_status_screen() {
   // XYZ Coordinates
   //
 
-  #define XYZ_BASELINE (30 + INFO_FONT_HEIGHT)
-
-  #define X_LABEL_POS  3
-  #define X_VALUE_POS 11
-  #define XYZ_SPACING 40
-
-  #if ENABLED(XYZ_HOLLOW_FRAME)
-    #define XYZ_FRAME_TOP 29
-    #define XYZ_FRAME_HEIGHT INFO_FONT_HEIGHT + 3
-  #else
-    #define XYZ_FRAME_TOP 30
-    #define XYZ_FRAME_HEIGHT INFO_FONT_HEIGHT + 1
-  #endif
-
-  static char xstring[5], ystring[5], zstring[7];
-  #if ENABLED(FILAMENT_LCD_DISPLAY)
-    static char wstring[5], mstring[4];
-  #endif
-
-  // At the first page, regenerate the XYZ strings
-  if (page.page == 0) {
-    strcpy(xstring, ftostr4sign(LOGICAL_X_POSITION(current_position[X_AXIS])));
-    strcpy(ystring, ftostr4sign(LOGICAL_Y_POSITION(current_position[Y_AXIS])));
-    strcpy(zstring, ftostr52sp(LOGICAL_Z_POSITION(current_position[Z_AXIS])));
-    #if ENABLED(FILAMENT_LCD_DISPLAY)
-      strcpy(wstring, ftostr12ns(filament_width_meas));
-      strcpy(mstring, itostr3(100.0 * (
-          parser.volumetric_enabled
-            ? planner.volumetric_area_nominal / planner.volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
-            : planner.volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
-        )
-      ));
-    #endif
-  }
-
-  if (PAGE_CONTAINS(XYZ_FRAME_TOP, XYZ_FRAME_TOP + XYZ_FRAME_HEIGHT - 1)) {
-
+  #if ENABLED(STATUS_SCREEN_XYZ)
+    #define XYZ_BASELINE (30 + INFO_FONT_HEIGHT)
+  
+    #define X_LABEL_POS  3
+    #define X_VALUE_POS 11
+    #define XYZ_SPACING 40
+  
     #if ENABLED(XYZ_HOLLOW_FRAME)
-      u8g.drawFrame(0, XYZ_FRAME_TOP, LCD_PIXEL_WIDTH, XYZ_FRAME_HEIGHT); // 8: 29-40  7: 29-39
+      #define XYZ_FRAME_TOP 29
+      #define XYZ_FRAME_HEIGHT INFO_FONT_HEIGHT + 3
     #else
-      u8g.drawBox(0, XYZ_FRAME_TOP, LCD_PIXEL_WIDTH, XYZ_FRAME_HEIGHT);   // 8: 30-39  7: 30-37
+      #define XYZ_FRAME_TOP 30
+      #define XYZ_FRAME_HEIGHT INFO_FONT_HEIGHT + 1
     #endif
-
-    if (PAGE_CONTAINS(XYZ_BASELINE - (INFO_FONT_HEIGHT - 1), XYZ_BASELINE)) {
-
-      #if DISABLED(XYZ_HOLLOW_FRAME)
-        u8g.setColorIndex(0); // white on black
-      #endif
-
-      u8g.setPrintPos(0 * XYZ_SPACING + X_LABEL_POS, XYZ_BASELINE);
-      lcd_printPGM(PSTR(MSG_X));
-      u8g.setPrintPos(0 * XYZ_SPACING + X_VALUE_POS, XYZ_BASELINE);
-      _draw_axis_value(X_AXIS, xstring, blink);
-
-      u8g.setPrintPos(1 * XYZ_SPACING + X_LABEL_POS, XYZ_BASELINE);
-      lcd_printPGM(PSTR(MSG_Y));
-      u8g.setPrintPos(1 * XYZ_SPACING + X_VALUE_POS, XYZ_BASELINE);
-      _draw_axis_value(Y_AXIS, ystring, blink);
-
-      u8g.setPrintPos(2 * XYZ_SPACING + X_LABEL_POS, XYZ_BASELINE);
-      lcd_printPGM(PSTR(MSG_Z));
-      u8g.setPrintPos(2 * XYZ_SPACING + X_VALUE_POS, XYZ_BASELINE);
-      _draw_axis_value(Z_AXIS, zstring, blink);
-
-      #if DISABLED(XYZ_HOLLOW_FRAME)
-        u8g.setColorIndex(1); // black on white
+  
+    static char xstring[5], ystring[5], zstring[7];
+    #if ENABLED(FILAMENT_LCD_DISPLAY)
+      static char wstring[5], mstring[4];
+    #endif
+  
+    // At the first page, regenerate the XYZ strings
+    if (page.page == 0) {
+      strcpy(xstring, ftostr4sign(LOGICAL_X_POSITION(current_position[X_AXIS])));
+      strcpy(ystring, ftostr4sign(LOGICAL_Y_POSITION(current_position[Y_AXIS])));
+      strcpy(zstring, ftostr52sp(LOGICAL_Z_POSITION(current_position[Z_AXIS])));
+      #if ENABLED(FILAMENT_LCD_DISPLAY)
+        strcpy(wstring, ftostr12ns(filament_width_meas));
+        strcpy(mstring, itostr3(100.0 * (
+            parser.volumetric_enabled
+              ? planner.volumetric_area_nominal / planner.volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
+              : planner.volumetric_multiplier[FILAMENT_SENSOR_EXTRUDER_NUM]
+          )
+        ));
       #endif
     }
-  }
+  
+    if (PAGE_CONTAINS(XYZ_FRAME_TOP, XYZ_FRAME_TOP + XYZ_FRAME_HEIGHT - 1)) {
+  
+      #if ENABLED(XYZ_HOLLOW_FRAME)
+        u8g.drawFrame(0, XYZ_FRAME_TOP, LCD_PIXEL_WIDTH, XYZ_FRAME_HEIGHT); // 8: 29-40  7: 29-39
+      #else
+        u8g.drawBox(0, XYZ_FRAME_TOP, LCD_PIXEL_WIDTH, XYZ_FRAME_HEIGHT);   // 8: 30-39  7: 30-37
+      #endif
+  
+      if (PAGE_CONTAINS(XYZ_BASELINE - (INFO_FONT_HEIGHT - 1), XYZ_BASELINE)) {
+  
+        #if DISABLED(XYZ_HOLLOW_FRAME)
+          u8g.setColorIndex(0); // white on black
+        #endif
+  
+        u8g.setPrintPos(0 * XYZ_SPACING + X_LABEL_POS, XYZ_BASELINE);
+        lcd_printPGM(PSTR(MSG_X));
+        u8g.setPrintPos(0 * XYZ_SPACING + X_VALUE_POS, XYZ_BASELINE);
+        _draw_axis_value(X_AXIS, xstring, blink);
+  
+        u8g.setPrintPos(1 * XYZ_SPACING + X_LABEL_POS, XYZ_BASELINE);
+        lcd_printPGM(PSTR(MSG_Y));
+        u8g.setPrintPos(1 * XYZ_SPACING + X_VALUE_POS, XYZ_BASELINE);
+        _draw_axis_value(Y_AXIS, ystring, blink);
+  
+        u8g.setPrintPos(2 * XYZ_SPACING + X_LABEL_POS, XYZ_BASELINE);
+        lcd_printPGM(PSTR(MSG_Z));
+        u8g.setPrintPos(2 * XYZ_SPACING + X_VALUE_POS, XYZ_BASELINE);
+        _draw_axis_value(Z_AXIS, zstring, blink);
+  
+        #if DISABLED(XYZ_HOLLOW_FRAME)
+          u8g.setColorIndex(1); // black on white
+        #endif
+      }
+    }
+  #endif
 
   //
   // Feedrate
   //
 
-  if (PAGE_CONTAINS(51 - INFO_FONT_HEIGHT, 49)) {
-    lcd_setFont(FONT_MENU);
-    u8g.setPrintPos(3, 50);
-    lcd_print(LCD_STR_FEEDRATE[0]);
-
-    lcd_setFont(FONT_STATUSMENU);
-    u8g.setPrintPos(12, 50);
-    lcd_print(itostr3(feedrate_percentage));
-    u8g.print('%');
-
-    //
-    // Filament sensor display if SD is disabled
-    //
-    #if ENABLED(FILAMENT_LCD_DISPLAY) && DISABLED(SDSUPPORT)
-      u8g.setPrintPos(56, 50);
-      lcd_print(wstring);
-      u8g.setPrintPos(102, 50);
-      lcd_print(mstring);
-      u8g.print('%');
+  #if ENABLED(STATUS_SCREEN_FEEDRATE)
+    if (PAGE_CONTAINS(51 - INFO_FONT_HEIGHT, 49)) {
       lcd_setFont(FONT_MENU);
-      u8g.setPrintPos(47, 50);
-      lcd_print(LCD_STR_FILAM_DIA);
-      u8g.setPrintPos(93, 50);
-      lcd_print(LCD_STR_FILAM_MUL);
-    #endif
-  }
+      u8g.setPrintPos(3, 50);
+      lcd_print(LCD_STR_FEEDRATE[0]);
+  
+      lcd_setFont(FONT_STATUSMENU);
+      u8g.setPrintPos(12, 50);
+      lcd_print(itostr3(feedrate_percentage));
+      u8g.print('%');
+  
+      //
+      // Filament sensor display if SD is disabled
+      //
+      #if ENABLED(FILAMENT_LCD_DISPLAY) && DISABLED(SDSUPPORT)
+        u8g.setPrintPos(56, 50);
+        lcd_print(wstring);
+        u8g.setPrintPos(102, 50);
+        lcd_print(mstring);
+        u8g.print('%');
+        lcd_setFont(FONT_MENU);
+        u8g.setPrintPos(47, 50);
+        lcd_print(LCD_STR_FILAM_DIA);
+        u8g.setPrintPos(93, 50);
+        lcd_print(LCD_STR_FILAM_MUL);
+      #endif
+    }
+  #endif
 
   //
   // Status line
