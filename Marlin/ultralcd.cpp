@@ -173,11 +173,11 @@ uint16_t max_display_update_time = 0;
 
   void lcd_main_menu();
   #if DISABLED(SLIM_LCD_MENUS)
-    void lcd_control_menu();
     void lcd_move_menu();
     void lcd_control_motion_menu();
     void lcd_control_temperature_menu();
   #endif
+  void lcd_control_menu();
   void lcd_prepare_menu();
   void lcd_tune_menu();
   
@@ -1117,10 +1117,8 @@ void lcd_quick_feedback(const bool clear_buttons) {
     else {
       MENU_ITEM(submenu, MSG_PREPARE, lcd_prepare_menu);
     }
-
-    #if DISABLED(SLIM_LCD_MENUS)
-      MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
-    #endif
+    
+    MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
 
     #if ENABLED(SDSUPPORT)
       if (card.cardOK) {
