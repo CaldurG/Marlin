@@ -24,10 +24,13 @@
 #include "utility.h"
 #include "temperature.h"
 
+#define SAFE_DELAY 50
+
 void safe_delay(millis_t ms) {
-  while (ms > 50) {
-    ms -= 50;
-    delay(50);
+  while (ms > SAFE_DELAY) {
+    delay(SAFE_DELAY);
+    ms -= SAFE_DELAY;
+    
     thermalManager.manage_heater();
   }
   delay(ms);

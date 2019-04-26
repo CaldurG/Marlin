@@ -52,7 +52,7 @@
 // Estimate the amount of time the Stepper ISR will take to execute
 //
 
-#ifndef MINIMUM_STEPPER_PULSE
+/*#ifndef MINIMUM_STEPPER_PULSE
   #define MINIMUM_STEPPER_PULSE 0UL
 #endif
 
@@ -62,7 +62,7 @@
   #else
     #define MAXIMUM_STEPPER_RATE 500000UL
   #endif
-#endif
+#endif*/
 
 // The base ISR takes 752 cycles
 #define ISR_BASE_CYCLES  752UL
