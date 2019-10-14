@@ -456,9 +456,9 @@
 
   // If you are using a pre-configured hotend then you can use one of the value sets by uncommenting it
   // Creality Ender-3
-  #define DEFAULT_Kp 18.62
-  #define DEFAULT_Ki 1.20
-  #define DEFAULT_Kd 72.06
+  #define DEFAULT_Kp 18.02
+  #define DEFAULT_Ki 1.21
+  #define DEFAULT_Kd 67.11
 
   // MakerGear
   //#define DEFAULT_Kp 7.0

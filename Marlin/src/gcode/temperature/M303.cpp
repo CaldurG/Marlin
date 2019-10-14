@@ -53,7 +53,7 @@ void GcodeSuite::M303() {
     return;
   }
 
-  const int c = parser.intval('C', 5);
+  const int c = parser.intval('C', 10);
   const bool u = parser.boolval('U');
   const int16_t temp = parser.celsiusval('S', e < 0 ? 70 : 150);
 
