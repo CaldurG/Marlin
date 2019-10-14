@@ -1088,8 +1088,8 @@ void setup() {
 
   /* power on init. sd card */
   #if ENABLED(SDSUPPORT)
-    if (!card.isDetected())
-      card.initsd();
+    if (!card.isMounted())
+      card.mount();
   #endif
 }
 
