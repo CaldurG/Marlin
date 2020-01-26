@@ -869,7 +869,7 @@
  */
 #define BLTOUCH
 #if ENABLED(BLTOUCH)
-  #define BLTOUCH_DELAY 200   // Minimum Command delay (ms). Enable and increase if needed
+  //#define BLTOUCH_DELAY 200   // Minimum Command delay (ms). Enable and increase if needed
 
   /**
    * BLTouch V3.0 and newer smart series
@@ -927,7 +927,7 @@
 #define MIN_PROBE_EDGE 20
 
 // X and Y axis travel speed (mm/m) between probes
-#define XY_PROBE_SPEED 8000
+#define XY_PROBE_SPEED 5000
 
 // Feedrate (mm/m) for the first approach when double-probing (MULTIPLE_PROBING == 2)
 #define Z_PROBE_SPEED_FAST (HOMING_FEEDRATE_Z / 4)
@@ -1047,7 +1047,7 @@
 // @section machine
 
 // The size of the print bed
-#define X_BED_SIZE 235
+#define X_BED_SIZE 225
 #define Y_BED_SIZE 235
 
 // Travel limits (mm) after homing, corresponding to endstop positions.
