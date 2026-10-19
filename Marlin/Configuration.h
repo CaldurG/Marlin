@@ -677,7 +677,7 @@
 // Above this temperature the heater will be switched off.
 // This can protect components from overheating, but NOT from shorts and failures.
 // (Use MINTEMP for thermistor short/failure protection.)
-#define HEATER_0_MAXTEMP 275
+#define HEATER_0_MAXTEMP 300 // default 275; EPCOS 100k table goes to 320, all-metal hotend
 #define HEATER_1_MAXTEMP 275
 #define HEATER_2_MAXTEMP 275
 #define HEATER_3_MAXTEMP 275
@@ -711,8 +711,8 @@
  * PIDTEMP : PID temperature control (~4.1K)
  * MPCTEMP : Predictive Model temperature control. (~1.8K without auto-tune)
  */
-#define PIDTEMP           // See the PID Tuning Guide at https://reprap.org/wiki/PID_Tuning
-//#define MPCTEMP         // See https://marlinfw.org/docs/features/model_predictive_control.html
+//#define PIDTEMP           // See the PID Tuning Guide at https://reprap.org/wiki/PID_Tuning
+#define MPCTEMP         // See https://marlinfw.org/docs/features/model_predictive_control.html
 
 #define PID_MAX  255      // Limit hotend current while PID is active (see PID_FUNCTIONAL_RANGE below); 255=full current
 #define PID_K1     0.95   // Smoothing factor within any PID loop
@@ -753,7 +753,7 @@
     //#define MPC_AUTOTUNE_DEBUG                      // Enable MPC debug logging (~870 bytes of flash)
   #endif
   //#define MPC_EDIT_MENU                             // Add MPC editing to the "Advanced Settings" menu. (~1.3K bytes of flash)
-  //#define MPC_AUTOTUNE_MENU                         // Add MPC auto-tuning to the "Advanced Settings" menu. (~350 bytes of flash)
+  #define MPC_AUTOTUNE_MENU                         // Add MPC auto-tuning to the "Advanced Settings" menu. (~350 bytes of flash)
 
   #define MPC_MAX 255                                 // (0..255) Current to nozzle while MPC is active.
   #define MPC_HEATER_POWER { 40.0f }                  // (W) Nominal heat cartridge powers.
@@ -822,7 +822,7 @@
  *
  * With this option disabled, bang-bang will be used. BED_LIMIT_SWITCHING enables hysteresis.
  */
-//#define PIDTEMPBED
+#define PIDTEMPBED
 
 #if ENABLED(PIDTEMPBED)
   //#define MIN_BED_POWER 0   // Min power to improve PID stability (0..MAX_BED_POWER).
@@ -931,7 +931,7 @@
                                   // is more than PID_FUNCTIONAL_RANGE then the PID will be shut off and the heater will be set to min/max.
 
   //#define PID_EDIT_MENU         // Add PID editing to the "Advanced Settings" menu. (~700 bytes of flash)
-  //#define PID_AUTOTUNE_MENU     // Add PID auto-tuning to the "Advanced Settings" menu. (~250 bytes of flash)
+  #define PID_AUTOTUNE_MENU     // Add PID auto-tuning to the "Advanced Settings" menu. (~250 bytes of flash)
 #endif
 
 // @section safety
@@ -1310,7 +1310,7 @@
 #define V_MAX_ENDSTOP_HIT_STATE HIGH
 #define W_MIN_ENDSTOP_HIT_STATE HIGH
 #define W_MAX_ENDSTOP_HIT_STATE HIGH
-#define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH
+#define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH // BLTouch requires HIGH in 2.1.x (the old 2.0.x Z_MIN_PROBE_ENDSTOP_INVERTING is handled internally)
 
 // Enable this feature if all enabled endstop pins are interrupt-capable.
 // This will remove the need to poll the interrupt pins, saving many CPU cycles.
@@ -1358,7 +1358,7 @@
  * Override with M92 (when enabled below)
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 500 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 415 } // default { 80, 80, 400, 500 }; E: 415 for Titan direct drive
 
 /**
  * Enable support for M92. Disable to save at least ~530 bytes of flash.
@@ -1370,7 +1370,7 @@
  * Override with M203
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_FEEDRATE          { 300, 300, 5, 25 }
+#define DEFAULT_MAX_FEEDRATE          { 100, 100, 5, 50 } // default { 300, 300, 5, 25 }
 
 //#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2
 #if ENABLED(LIMITED_MAX_FR_EDITING)
@@ -1383,7 +1383,7 @@
  * Override with M201
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
+#define DEFAULT_MAX_ACCELERATION      { 500, 500, 100, 5000 } // default { 3000, 3000, 100, 10000 }
 
 //#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
@@ -1398,9 +1398,9 @@
  *   M204 R    Retract Acceleration
  *   M204 T    Travel Acceleration
  */
-#define DEFAULT_ACCELERATION          3000    // X, Y, Z and E acceleration for printing moves
-#define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
-#define DEFAULT_TRAVEL_ACCELERATION   3000    // X, Y, Z acceleration for travel (non printing) moves
+#define DEFAULT_ACCELERATION          500    // X, Y, Z and E acceleration for printing moves (default 3000)
+#define DEFAULT_RETRACT_ACCELERATION  500    // E acceleration for retracts (default 3000)
+#define DEFAULT_TRAVEL_ACCELERATION   500    // X, Y, Z acceleration for travel (non printing) moves (default 3000)
 
 /**
  * Default Jerk limits (mm/s)
@@ -1452,7 +1452,7 @@
  *
  * See https://github.com/synthetos/TinyG/wiki/Jerk-Controlled-Motion-Explained
  */
-//#define S_CURVE_ACCELERATION
+#define S_CURVE_ACCELERATION
 #if ENABLED(S_CURVE_ACCELERATION)
   // Define to use 4th instead of 6th order motion curve
   //#define S_CURVE_FACTOR 0.25    // Initial and final acceleration factor, ideally 0.1 to 0.4.
@@ -1540,7 +1540,7 @@
 /**
  * The BLTouch probe uses a Hall effect sensor and emulates a servo.
  */
-//#define BLTOUCH
+#define BLTOUCH
 
 /**
  * MagLev V4 probe by MDD
@@ -1729,7 +1729,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 } // (mm) X, Y, Z distance from Nozzle tip to Probe trigger-point
+#define NOZZLE_TO_PROBE_OFFSET { -42, -5, 0 } // (mm) X, Y, Z distance from Nozzle tip to Probe trigger-point; default { 10, 10, 0 }
 
 // Enable and set to use a specific tool for probing. Disable to allow any tool.
 #define PROBING_TOOL 0
@@ -1741,7 +1741,7 @@
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#define PROBING_MARGIN 10
+#define PROBING_MARGIN 20 // default 10
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
@@ -1833,7 +1833,7 @@
 //#define PROBE_OFFSET_ZMAX  20   // (mm)
 
 // Enable the M48 repeatability test to test probe accuracy
-//#define Z_MIN_PROBE_REPEATABILITY_TEST
+#define Z_MIN_PROBE_REPEATABILITY_TEST
 
 // Before deploy/stow pause for user confirmation
 //#define PAUSE_BEFORE_DEPLOY_STOW
@@ -1848,12 +1848,12 @@
  * These options are most useful for the BLTouch probe, but may also improve
  * readings with inductive probes and piezo sensors.
  */
-//#define PROBING_HEATERS_OFF       // Turn heaters off when probing
+#define PROBING_HEATERS_OFF       // Turn heaters off when probing (default commented)
 #if ENABLED(PROBING_HEATERS_OFF)
   //#define WAIT_FOR_BED_HEATER     // Wait for bed to heat back up between probes (to improve accuracy)
   //#define WAIT_FOR_HOTEND         // Wait for hotend to heat back up between probes (to improve accuracy & prevent cold extrude)
 #endif
-//#define PROBING_FANS_OFF          // Turn fans off when probing
+#define PROBING_FANS_OFF          // Turn fans off when probing (default commented)
 //#define PROBING_ESTEPPERS_OFF     // Turn all extruder steppers off when probing
 //#define PROBING_STEPPERS_OFF      // Turn all steppers off (unless needed to hold position) when probing (including extruders)
 //#define DELAY_BEFORE_PROBING 200  // (ms) To prevent vibrations from triggering piezo sensors
@@ -1900,7 +1900,7 @@
 // @section stepper drivers
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
-#define INVERT_X_DIR false
+#define INVERT_X_DIR true // default false
 #define INVERT_Y_DIR true
 #define INVERT_Z_DIR false
 //#define INVERT_I_DIR false
@@ -1922,7 +1922,7 @@
 
 // @section homing
 
-//#define NO_MOTION_BEFORE_HOMING // Inhibit movement until all axes have been homed. Also enable HOME_AFTER_DEACTIVATE for extra safety.
+#define NO_MOTION_BEFORE_HOMING // default commented; inhibit movement until all axes have been homed. Also enable HOME_AFTER_DEACTIVATE for extra safety.
 //#define HOME_AFTER_DEACTIVATE   // Require rehoming after steppers are deactivated. Also enable NO_MOTION_BEFORE_HOMING for extra safety.
 
 /**
@@ -1932,10 +1932,10 @@
  */
 //#define Z_IDLE_HEIGHT Z_HOME_POS
 
-//#define Z_CLEARANCE_FOR_HOMING  4   // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
+#define Z_CLEARANCE_FOR_HOMING  4   // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ... (default commented)
                                       // You'll need this much clearance above Z_MAX_POS to avoid grinding.
 
-//#define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
+#define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
 //#define XY_AFTER_HOMING { 10, 10 }  // (mm) Move to an XY position after homing (and raising Z)
 
 //#define EVENT_GCODE_AFTER_HOMING "M300 P440 S200"  // Commands to run after G28 (and move to XY_AFTER_HOMING)
@@ -1970,8 +1970,8 @@
 // @section geometry
 
 // The size of the printable area
-#define X_BED_SIZE 200
-#define Y_BED_SIZE 200
+#define X_BED_SIZE 225 // default 200
+#define Y_BED_SIZE 235 // default 200
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
@@ -1979,7 +1979,7 @@
 #define Z_MIN_POS 0
 #define X_MAX_POS X_BED_SIZE
 #define Y_MAX_POS Y_BED_SIZE
-#define Z_MAX_POS 200
+#define Z_MAX_POS 250 // default 200
 //#define I_MIN_POS 0
 //#define I_MAX_POS 50
 //#define J_MIN_POS 0
@@ -2194,6 +2194,7 @@
  *   With an LCD controller the process is guided step-by-step.
  */
 //#define AUTO_BED_LEVELING_3POINT
+#define AUTO_BED_LEVELING_3POINT // flat glass bed: a tilted plane is all that's needed; 3 corner points avoid the glass clips
 //#define AUTO_BED_LEVELING_LINEAR
 //#define AUTO_BED_LEVELING_BILINEAR
 //#define AUTO_BED_LEVELING_UBL
@@ -2247,7 +2248,7 @@
    * at which point movement will be level to the machine's XY plane.
    * The height can be set with M420 Z<height>
    */
-  #define ENABLE_LEVELING_FADE_HEIGHT
+  //#define ENABLE_LEVELING_FADE_HEIGHT // not needed with 3-point: the correction is a flat tilted plane, valid at any Z (fading it would drift tall prints off-plane)
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
     #define DEFAULT_LEVELING_FADE_HEIGHT 10.0 // (mm) Default fade height.
   #endif
@@ -2281,7 +2282,7 @@
 #if ANY(AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_BILINEAR)
 
   // Set the number of grid points per dimension.
-  #define GRID_MAX_POINTS_X 3
+  #define GRID_MAX_POINTS_X 3 // minimum 3 with AUTO_BED_LEVELING_BILINEAR (sanity check); plan had 2, invalid
   #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
   // Probe along the Y axis, advancing X after each column
@@ -2371,7 +2372,7 @@
  * Add a bed leveling sub-menu for ABL or MBL.
  * Include a guided procedure if manual probing is enabled.
  */
-//#define LCD_BED_LEVELING
+//#define LCD_BED_LEVELING // not needed: with an automatic probe the "Probe and Level" menu (G29, on/off toggle) appears via HAS_LEVELING; LCD_BED_LEVELING only adds the guided procedure for manual leveling
 
 #if ENABLED(LCD_BED_LEVELING)
   #define MESH_EDIT_Z_STEP  0.025 // (mm) Step size while manually probing Z axis.
@@ -2438,7 +2439,7 @@
  * - Allows Z homing only when XY positions are known and trusted.
  * - If stepper drivers sleep, XY homing may be required again before Z homing.
  */
-//#define Z_SAFE_HOMING
+#define Z_SAFE_HOMING
 
 #if ENABLED(Z_SAFE_HOMING)
   #define Z_SAFE_HOMING_X_POINT X_CENTER  // (mm) X point for Z homing
@@ -2528,13 +2529,13 @@
  *   M501 - Read settings from EEPROM. (i.e., Throw away unsaved changes)
  *   M502 - Revert settings to "factory" defaults. (Follow with M500 to init the EEPROM.)
  */
-//#define EEPROM_SETTINGS     // Persistent storage with M500 and M501
+#define EEPROM_SETTINGS     // Persistent storage with M500 and M501
 //#define DISABLE_M503        // Saves ~2700 bytes of flash. Disable for release!
 #define EEPROM_CHITCHAT       // Give feedback on EEPROM commands. Disable to save flash.
 #define EEPROM_BOOT_SILENT    // Keep M503 quiet and only give errors during first load
 #if ENABLED(EEPROM_SETTINGS)
   //#define EEPROM_AUTO_INIT  // Init EEPROM automatically on any errors.
-  //#define EEPROM_INIT_NOW   // Init EEPROM on first boot after a new build.
+  #define EEPROM_INIT_NOW   // Init EEPROM on first boot after a new build.
 #endif
 
 // @section host
@@ -2567,14 +2568,14 @@
 // Preheat Constants - Up to 10 are supported without changes
 //
 #define PREHEAT_1_LABEL       "PLA"
-#define PREHEAT_1_TEMP_HOTEND 180
-#define PREHEAT_1_TEMP_BED     70
+#define PREHEAT_1_TEMP_HOTEND 210 // default 180
+#define PREHEAT_1_TEMP_BED     55 // default 70
 #define PREHEAT_1_TEMP_CHAMBER 35
 #define PREHEAT_1_FAN_SPEED     0 // Value from 0 to 255
 
-#define PREHEAT_2_LABEL       "ABS"
+#define PREHEAT_2_LABEL       "PETG" // default "ABS"
 #define PREHEAT_2_TEMP_HOTEND 240
-#define PREHEAT_2_TEMP_BED    110
+#define PREHEAT_2_TEMP_BED     80 // default 110
 #define PREHEAT_2_TEMP_CHAMBER 35
 #define PREHEAT_2_FAN_SPEED     0 // Value from 0 to 255
 
@@ -2591,7 +2592,7 @@
  *    P1  Raise the nozzle always to Z-park height.
  *    P2  Raise the nozzle by Z-park amount, limited to Z_MAX_POS.
  */
-//#define NOZZLE_PARK_FEATURE
+#define NOZZLE_PARK_FEATURE
 
 #if ENABLED(NOZZLE_PARK_FEATURE)
   // Specify a park position as { X, Y, Z_raise }
@@ -2773,7 +2774,7 @@
  * SD Card support is disabled by default. If your controller has an SD slot,
  * you must uncomment the following option or it won't work.
  */
-//#define SDSUPPORT
+#define SDSUPPORT
 
 /**
  * SD CARD: ENABLE CRC
@@ -2781,7 +2782,7 @@
  * Use CRC checks and retries on the SD communication.
  */
 #if ENABLED(SDSUPPORT)
-  //#define SD_CHECK_AND_RETRY
+  #define SD_CHECK_AND_RETRY
 #endif
 
 // @section interface
@@ -3229,7 +3230,7 @@
 //
 // Connect to EXP1 on RAMPS and compatible boards.
 //
-//#define CR10_STOCKDISPLAY
+#define CR10_STOCKDISPLAY
 
 //
 // Ender-2 OEM display, a variant of the MKS_MINI_12864
@@ -3827,7 +3828,7 @@
  * Set this manually if there are extra servos needing manual control.
  * Set to 0 to turn off servo support.
  */
-//#define NUM_SERVOS 3 // Note: Servo index starts with 0 for M280-M282 commands
+#define NUM_SERVOS 1 // default commented (3); BLTouch servo. Note: Servo index starts with 0 for M280-M282 commands
 
 // (ms) Delay before the next move will start, to give the servo time to reach its target angle.
 // 300ms is a good value but you can try less delay.

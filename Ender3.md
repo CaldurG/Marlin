@@ -49,8 +49,10 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
 - `BLTOUCH` (uncomment)
 - Keep `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN`
-- `Z_MIN_PROBE_ENDSTOP_HIT_STATE LOW` (2.1.x replacement for old
-  `Z_MIN_PROBE_ENDSTOP_INVERTING true`)
+- `Z_MIN_PROBE_ENDSTOP_HIT_STATE` — leave the default (HIGH); in 2.1.x
+  BLTouch requires HIGH (the old 2.0.x
+  `Z_MIN_PROBE_ENDSTOP_INVERTING true` is handled internally by the
+  BLTouch driver; the sanity check errors out on LOW)
 - `NOZZLE_TO_PROBE_OFFSET { -42, -5, 0 }`
 - `MIN_PROBE_EDGE 20`
 - `XY_PROBE_FEEDRATE` — leave the default (133*60 mm/min); old config
@@ -74,17 +76,30 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
 ### Bed leveling
 
-- `AUTO_BED_LEVELING_BILINEAR` (uncomment)
-- `GRID_MAX_POINTS_X 2`
-- Keep `ENABLE_LEVELING_FADE_HEIGHT` defaults
-- `LCD_BED_LEVELING` (uncomment, Configuration.h ~line 2378) — Bed
-  Leveling submenu in the LCD: run G29, view/activate the mesh, and
-  fade height, all from the display
+- `AUTO_BED_LEVELING_3POINT` (uncomment) — flat glass bed: a single
+  tilted plane is all that's needed (bilinear mesh would be overkill,
+  and its 3×3 grid puts probe points under the 15 mm glass clips on
+  the X middle). 3 corner points, none under the clips.
+- `PROBE_PT_1 { 35, 205 }`, `PROBE_PT_2 { 35, 30 }`,
+  `PROBE_PT_3 { 180, 117 }` (Configuration_adv.h ~line 2551) —
+  back-left, front-left, right-middle; an even triangle across the
+  bed, clear of the clips, within probe reach (X ≤ 183 due to the -42
+  probe offset)
+- `ENABLE_LEVELING_FADE_HEIGHT` — not needed with 3-point: the
+  correction is a flat tilted plane, valid at any Z (fading it would
+  drift tall prints off-plane). It's also inside a mesh-only
+  conditional block, so it's compiled out automatically
+- `LCD_BED_LEVELING` — not needed: with an automatic probe the
+  "Probe and Level" menu (Level Bed = G29, on/off toggle) is provided
+  by `HAS_LEVELING` alone; `LCD_BED_LEVELING` only adds the guided
+  procedure for *manual* leveling (PROBE_MANUALLY / MESH_BED_LEVELING)
 - `ASSISTED_TRAMMING` (uncomment, Configuration_adv.h ~line 1125) —
   G35 probes the bed corners and reports which screw to turn and how
-  much. Set `TRAMMING_POINT_XY { { 35, 30 }, { 190, 30 }, { 190, 205 },
-  { 35, 205 } }` (35 mm inset on X, 30 mm on Y, for the 225×235 bed)
-  and `TRAMMING_SCREW_THREAD M3_CW` (Ender 3 thumbwheels)
+  much. Set `TRAMMING_POINT_XY { { 35, 30 }, { 183, 30 }, { 183, 205 },
+  { 35, 205 } }` (35 mm inset on X, 30 mm on Y, for the 225×235 bed;
+  right points capped at X=183 — the probe offset of -42 means probing
+  further right would push the nozzle past X_MAX_POS) and
+  `TRAMMING_SCREW_THREAD M3_CW` (Ender 3 thumbwheels)
 
 ### Babystepping
 
@@ -108,6 +123,12 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
   - After flashing: run `M306 T` once at ~215 °C, then `M500`
   - Set filament heat capacity per material if needed:
     `M306 H0.0056` (PLA), `H0.0036` (PETG)
+- `PIDTEMPBED` (uncomment, ~line 825) — PID for the bed instead of
+  bang-bang; tighter temp control. The stock `DEFAULT_BED_*` values are
+  generic — autotune after flashing (see After flashing step 3).
+  `PID_AUTOTUNE_MENU` (uncomment, ~line 934) covers the bed too once
+  `PIDTEMPBED` is on (Bed PID Autotune appears in the LCD Temperature
+  menu).
 - `HEATER_0_MAXTEMP 300` (stock 275; old config 290) — the thermistor
   table (EPCOS 100k, type 1) goes up to 320 °C; 300 leaves headroom
   under the table limit while covering any filament you'd run through
@@ -219,27 +240,76 @@ pio run -e LPC1768
 
 ## After flashing (operational)
 
-1. `M502` then `M500` — reset EEPROM to new defaults
-2. `M306 T` — MPC autotune hotend (heats to ~215 °C at bed center and
-   measures the model; run from LCD via MPC_AUTOTUNE_MENU), then `M500`
-3. `M303 E-1 S60` — PID autotune bed (bed stays bang-bang/PID), then `M500`
-4. Probe Z-offset calibration (`M851 Z` / paper test), then `M500`
-5. E-steps calibration (`M92 E`), then `M500`
-6. Verify axis directions; flip `INVERT_*_DIR` if any axis runs backwards
+1. EEPROM: `EEPROM_INIT_NOW` (in the plan) auto-initializes EEPROM on
+   the first boot after each flash — no manual step needed. Only if it
+   was disabled or EEPROM seems corrupted: `M502` then `M500`.
+   NOTE: re-flashing the same build wipes tuned EEPROM values back to
+   defaults; comment out `EEPROM_INIT_NOW` once tuning is done and
+   settings should survive re-flashes.
+2. MPC autotune hotend — from the LCD: Configuration → Advanced
+   Settings → Temperature → MPC Autotune (runs `M306 T`; heats to
+   ~215 °C at bed center and measures the model). Watch progress on
+   the status screen, then `M500` to save.
+3. Bed PID autotune — from the LCD: Configuration → Advanced Settings →
+   Temperature → Bed PID Autotune (runs `M303 E-1`; ~60 °C for PLA).
+   Watch progress on the status screen, then `M500` to save.
+4. Probe Z-offset calibration — from the LCD: Configuration →
+   Advanced Settings → Probe Offsets → Probe Z Wizard (homes, probes,
+   then a paper test at the same spot; sets `M851 Z` automatically),
+   then `M500`
+5. E-steps calibration (no host needed, all from the LCD + SD card):
+   - Heat the hotend to printing temp (Prepare → Preheat PLA)
+   - Use the LCD to extrude slowly until filament flows, then mark the
+     filament ~120 mm above the extruder inlet (e.g. with a ruler)
+   - Extrude 100 mm from the LCD: Prepare → Move Axis → Extruder
+     (move in 10 mm steps ×10; the extruder only moves when hot)
+   - Measure the remaining distance from the mark to the inlet
+     (`used = 120 − remaining`)
+   - New E-steps = current E-steps × 100 / used
+     (current value: 415 from the plan; check with `M503` or the
+     Configuration → Advanced Settings → Steps/mm menu)
+   - Set it from the LCD: Configuration → Advanced Settings →
+     Steps/mm → E0 (if the Steps/mm menu is enabled), or put
+     `M92 E<new>` + `M500` in a small `.gcode` file on the SD card and
+     "print" it
+   - Repeat once to confirm, then `M500`
+6. Verify axis directions (LCD: Prepare → Move Axis; test with the
+   nozzle well above the bed, e.g. after homing Z sits at 10 mm thanks
+   to `Z_AFTER_HOMING`):
+   - X: jog +10 mm → nozzle must move **right** (toward X=220);
+     if left, flip `INVERT_X_DIR`
+   - Y: jog +10 mm → bed must move toward the **back** (nozzle ends up
+     relatively at the front); if the bed comes toward you, flip
+     `INVERT_Y_DIR`
+   - Z: jog +10 mm → gantry must move **up**; if down, flip
+     `INVERT_Z_DIR`
+   - E: jog +10 mm (hotend at printing temp only) → filament must be
+     **pushed out**; if it retracts, flip `INVERT_E0_DIR`
+   - If any axis is wrong: re-flash with the corresponding
+     `INVERT_*_DIR` toggled in Configuration.h (~lines 1903-1914).
+     (A runtime `M569` fix is possible but re-flashing is cleaner.)
+   - The plan sets INVERT_X/Y true, Z/E false (matching the proven
+     2022 config) — verify anyway before the first homing
 7. Junction deviation: set at runtime with `M205 J<value>` (e.g. in slicer
    start G-code). Preferred value: `M205 J0.1` — proven at 40 mm/s print
    speeds; revisit if speeds increase. Can also be saved with `M500`.
-8. E-steps calibration (Titan direct drive, default 415):
-   - Heat hotend, mark filament at the extruder inlet
-   - `M83` then `G1 E100 F300` — extrude 100 mm slowly
-   - Measure actual extruded length, then
-     `new_steps = old_steps × 100 / actual_extruded_mm`
-   - Apply with `M92 E<new>`, repeat until actual = 100 mm, then `M500`
-   - Or set per print via slicer start G-code: `M92 E415`
-9. Linear Advance: set at runtime with `M900 K<value>` (e.g. in slicer
+   Tuning note: no autotune exists — print a test cube with sharp
+   corners at your real print speed and look for ghosting/ringing
+   trailing behind corners: too much ringing → lower the value;
+   visible corner slowdowns but no ringing → raise it. Typical useful
+   range 0.01-0.2. Tune acceleration (step 9) first, then this.
+8. Linear Advance: set at runtime with `M900 K<value>` (e.g. in slicer
    start G-code). Preferred value: `M900 K0.04` (was 0.05–0.1 before).
    Can also be saved with `M500`.
-10. Motion tuning (all runtime-editable, save with `M500`):
+   Test: print a K-factor calibration pattern (generator:
+   <https://marlinfw.org/docs/tools/lin_advance_kfactor.html>) — a
+   single-perimeter print where K increases continuously along the
+   length. Read it at your real print speed/material: too-low K shows
+   bulges at line starts, too-high K shows gaps at line ends; the best
+   K is where both ends look clean. The generated `.gcode` goes
+   straight on the SD card. K is filament-specific — retest when
+   switching materials.
+9. Motion tuning (all runtime-editable, save with `M500`):
     - `M203 X100 Y100 Z5 E50` — max feedrates (mm/s)
     - `M201 X500 Y500 Z100 E5000` — max accelerations (mm/s²)
     - `M204 P500 R500 T500` — print / retract / travel acceleration

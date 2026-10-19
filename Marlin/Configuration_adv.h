@@ -962,7 +962,7 @@
 //#define HOMING_BACKOFF_POST_MM { 2, 2, 2 }  // (linear=mm, rotational=°) Backoff from endstops after homing
 //#define XY_COUNTERPART_BACKOFF_MM 0         // (mm) Backoff X after homing Y, and vice-versa
 
-//#define QUICK_HOME                          // If G28 contains XY do a diagonal move first
+#define QUICK_HOME                          // If G28 contains XY do a diagonal move first (default commented)
 //#define HOME_Y_BEFORE_X                     // If G28 contains XY home Y before X
 //#define HOME_Z_FIRST                        // Home Z first. Requires a real endstop (not a probe).
 //#define CODEPENDENT_XY_HOMING               // If X/Y can't home without homing Y/X first
@@ -1130,11 +1130,11 @@
  *
  * Add the G35 command to measure bed corners and help adjust screws. Requires a bed probe.
  */
-//#define ASSISTED_TRAMMING
+#define ASSISTED_TRAMMING
 #if ENABLED(ASSISTED_TRAMMING)
 
   // Define from 3 to 9 points to probe.
-  #define TRAMMING_POINT_XY { {  20, 20 }, { 180,  20 }, { 180, 180 }, { 20, 180 } }
+  #define TRAMMING_POINT_XY { { 35, 30 }, { 183, 30 }, { 183, 205 }, { 35, 205 } } // default { { 20, 20 }, { 180, 20 }, { 180, 180 }, { 20, 180 } }; 35 mm inset X / 30 mm inset Y on the 225x235 bed. Right points capped at X=183: probe offset -42 means probing further right would push the nozzle past X_MAX_POS (225)
 
   // Define position names for probe points.
   #define TRAMMING_POINT_NAME_1 "Front-Left"
@@ -1616,7 +1616,7 @@
    *  - The difference is used to set the probe Z offset.
    */
   #if ANY(HAS_MARLINUI_MENU, HAS_TFT_LVGL_UI)
-    //#define PROBE_OFFSET_WIZARD
+    #define PROBE_OFFSET_WIZARD
     #if ENABLED(PROBE_OFFSET_WIZARD)
       /**
        * Enable to init the Probe Z-Offset when starting the Wizard.
@@ -1740,7 +1740,7 @@
   //#define LCD_TIMEOUT_TO_STATUS 15000   // (ms)
 
   // Scroll a longer status message into view
-  //#define STATUS_MESSAGE_SCROLLING
+  #define STATUS_MESSAGE_SCROLLING // scroll long status messages on the 16-column LCD (default commented)
 
   // Apply a timeout to low-priority status messages
   //#define STATUS_MESSAGE_TIMEOUT_SEC 30 // (seconds)
@@ -1948,7 +1948,7 @@
    *  - SDSORT_CACHE_NAMES will retain the sorted file listing in RAM. (Expensive!)
    *  - SDSORT_DYNAMIC_RAM only uses RAM when the SD menu is visible. (Use with caution!)
    */
-  //#define SDCARD_SORT_ALPHA
+  #define SDCARD_SORT_ALPHA
 
   // SD Card Sorting options
   #if ENABLED(SDCARD_SORT_ALPHA)
@@ -1958,7 +1958,7 @@
     #define SDSORT_FOLDERS        -1      // -1=above  0=none  1=below
     #define SDSORT_GCODE           false  // Enable G-code M34 to set sorting behaviors: M34 S<-1|0|1> F<-1|0|1>
     #define SDSORT_USES_STACK      false  // Prefer the stack for pre-sorting to give back some SRAM. (Negated by next 2 options.)
-    #define SDSORT_USES_RAM        false  // Pre-allocate a static array for faster pre-sorting.
+    #define SDSORT_USES_RAM        true   // Pre-allocate a static array for faster pre-sorting. (default false; LPC1768 has the RAM)
     #if ENABLED(SDSORT_USES_RAM)
       #define SDSORT_CACHE_NAMES   false  // Keep sorted items in RAM longer for speedy performance. Most expensive option.
       #if ENABLED(SDSORT_CACHE_NAMES)
@@ -1977,7 +1977,7 @@
   //#define LONG_FILENAME_WRITE_SUPPORT   // Create / delete files with long filenames via M28, M30, and Binary Transfer Protocol
   //#define M20_TIMESTAMP_SUPPORT         // Include timestamps by adding the 'T' flag to M20 commands
 
-  //#define SCROLL_LONG_FILENAMES         // Scroll long filenames in the SD card menu
+  #define SCROLL_LONG_FILENAMES         // Scroll long filenames in the SD card menu (default commented)
 
   //#define SD_ABORT_NO_COOLDOWN          // Leave the heaters on after Stop Print (not recommended!)
 
@@ -2081,7 +2081,7 @@
    *
    * :[ 'LCD', 'ONBOARD', 'CUSTOM_CABLE' ]
    */
-  //#define SDCARD_CONNECTION LCD
+  #define SDCARD_CONNECTION ONBOARD // default LCD; use the onboard SD slot on the SKR 1.3
 
   // Enable if SD detect is rendered useless (e.g., by using an SD extender)
   //#define NO_SD_DETECT
@@ -2433,7 +2433,7 @@
  *
  * Warning: Does not respect endstops!
  */
-//#define BABYSTEPPING
+#define BABYSTEPPING
 #if ENABLED(BABYSTEPPING)
   //#define EP_BABYSTEPPING                 // M293/M294 babystepping with EMERGENCY_PARSER support
   //#define BABYSTEP_WITHOUT_HOMING
@@ -2444,7 +2444,7 @@
   #define BABYSTEP_MULTIPLICATOR_Z  1       // (steps or mm) Steps or millimeter distance for each Z babystep
   #define BABYSTEP_MULTIPLICATOR_XY 1       // (steps or mm) Steps or millimeter distance for each XY babystep
 
-  //#define DOUBLECLICK_FOR_Z_BABYSTEPPING  // Double-click on the Status Screen for Z Babystepping.
+  #define DOUBLECLICK_FOR_Z_BABYSTEPPING  // Double-click on the Status Screen for Z Babystepping.
   #if ENABLED(DOUBLECLICK_FOR_Z_BABYSTEPPING)
     #define DOUBLECLICK_MAX_INTERVAL 1250   // (ms) Maximum interval between clicks.
                                             // Note: Extra time may be added to mitigate controller latency.
@@ -2456,7 +2456,7 @@
 
   //#define BABYSTEP_DISPLAY_TOTAL          // Display total babysteps since last G28
 
-  //#define BABYSTEP_ZPROBE_OFFSET          // Combine M851 Z and Babystepping
+  #define BABYSTEP_ZPROBE_OFFSET          // Combine M851 Z and Babystepping
   #if ENABLED(BABYSTEP_ZPROBE_OFFSET)
     //#define BABYSTEP_HOTEND_Z_OFFSET      // For multiple hotends, babystep relative Z offsets
     //#define BABYSTEP_GFX_OVERLAY          // Enable graphical overlay on Z-offset editor
@@ -2480,13 +2480,13 @@
  *
  * See https://marlinfw.org/docs/features/lin_advance.html for full instructions.
  */
-//#define LIN_ADVANCE
+#define LIN_ADVANCE
 
 #if ANY(LIN_ADVANCE, FT_MOTION)
   #if ENABLED(DISTINCT_E_FACTORS)
     #define ADVANCE_K { 0.22 }    // (mm) Compression length per 1mm/s extruder speed, per extruder. Override with 'M900 T<tool> K<mm>'.
   #else
-    #define ADVANCE_K 0.22        // (mm) Compression length for all extruders. Override with 'M900 K<mm>'.
+    #define ADVANCE_K 0.04        // (mm) Compression length for all extruders. Override with 'M900 K<mm>'. Default 0.22; proven value for Titan direct drive
   #endif
   //#define ADVANCE_K_EXTRA       // Add a second linear advance constant, configurable with 'M900 L'.
 #endif
@@ -2548,9 +2548,9 @@
  * Override if the automatically selected points are inadequate.
  */
 #if NEEDS_THREE_PROBE_POINTS
-  //#define PROBE_PT_1 {  15, 180 }   // (mm) { x, y }
-  //#define PROBE_PT_2 {  15,  20 }
-  //#define PROBE_PT_3 { 170,  20 }
+  #define PROBE_PT_1 {  35, 205 }   // (mm) { x, y } back-left; default { 15, 180 }. Corner points clear of the 15 mm glass clips
+  #define PROBE_PT_2 {  35,  30 }   // front-left; default { 15, 20 }
+  #define PROBE_PT_3 { 180, 117 }   // right-middle; default { 170, 20 }; capped below X=183 (probe offset -42)
 #endif
 
 /**
@@ -2795,7 +2795,7 @@
 #if ALL(HAS_MEDIA, DIRECT_STEPPING)
   #define BLOCK_BUFFER_SIZE  8
 #elif HAS_MEDIA
-  #define BLOCK_BUFFER_SIZE 16
+  #define BLOCK_BUFFER_SIZE 32 // default 16; smoother SD printing, LPC1768 has the RAM
 #else
   #define BLOCK_BUFFER_SIZE 16
 #endif
@@ -2804,7 +2804,7 @@
 
 // The ASCII buffer for serial input
 #define MAX_CMD_SIZE 96
-#define BUFSIZE 4
+#define BUFSIZE 16 // default 4; larger G-code ring buffer keeps the planner fed during SD prints
 
 /**
  * Host Transmit Buffer Size
@@ -3095,7 +3095,7 @@
  *
  * Enable PARK_HEAD_ON_PAUSE to add the G-code M125 Pause and Park.
  */
-//#define ADVANCED_PAUSE_FEATURE
+#define ADVANCED_PAUSE_FEATURE
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   #define PAUSE_PARK_RETRACT_FEEDRATE         60  // (mm/s) Initial retract feedrate.
   #define PAUSE_PARK_RETRACT_LENGTH            2  // (mm) Initial retract.
@@ -3135,7 +3135,7 @@
   //#define FILAMENT_CHANGE_RESUME_ON_INSERT      // Automatically continue / load filament when runout sensor is triggered again.
   //#define PAUSE_REHEAT_FAST_RESUME              // Reduce number of waits by not prompting again post-timeout before continuing.
 
-  //#define PARK_HEAD_ON_PAUSE                    // Park the nozzle during pause and filament change.
+  #define PARK_HEAD_ON_PAUSE                    // Park the nozzle during pause and filament change. (default commented)
   //#define HOME_BEFORE_FILAMENT_CHANGE           // If needed, home before parking for filament change
 
   //#define FILAMENT_LOAD_UNLOAD_GCODES           // Add M701/M702 Load/Unload G-codes, plus Load/Unload in the LCD Prepare menu.
@@ -3187,7 +3187,7 @@
   #endif
 
   #if AXIS_IS_TMC_CONFIG(X)
-    #define X_CURRENT       800        // (mA) RMS current. Multiply by 1.414 for peak current.
+    #define X_CURRENT       600        // (mA) RMS current. Multiply by 1.414 for peak current. Default 800
     #define X_CURRENT_HOME  X_CURRENT  // (mA) RMS current for homing. (Typically lower than *_CURRENT.)
     #define X_MICROSTEPS     16        // 0..256
     #define X_RSENSE          0.11
@@ -3207,7 +3207,7 @@
   #endif
 
   #if AXIS_IS_TMC_CONFIG(Y)
-    #define Y_CURRENT       800
+    #define Y_CURRENT       600 // default 800
     #define Y_CURRENT_HOME  Y_CURRENT
     #define Y_MICROSTEPS     16
     #define Y_RSENSE          0.11
@@ -3227,7 +3227,7 @@
   #endif
 
   #if AXIS_IS_TMC_CONFIG(Z)
-    #define Z_CURRENT       800
+    #define Z_CURRENT       600 // default 800
     #define Z_CURRENT_HOME  Z_CURRENT
     #define Z_MICROSTEPS     16
     #define Z_RSENSE          0.11
@@ -3327,7 +3327,7 @@
   #endif
 
   #if AXIS_IS_TMC_CONFIG(E0)
-    #define E0_CURRENT      800
+    #define E0_CURRENT      700 // default 800; may need a bump for Titan direct drive — increase if it skips
     #define E0_MICROSTEPS    16
     #define E0_RSENSE         0.11
     #define E0_CHAIN_POS     -1
@@ -3500,14 +3500,14 @@
    */
   #if HAS_STEALTHCHOP
     #define STEALTHCHOP_XY
-    #define STEALTHCHOP_Z
+    //#define STEALTHCHOP_Z // default enabled; Z stays spreadCycle as before
     #define STEALTHCHOP_I
     #define STEALTHCHOP_J
     #define STEALTHCHOP_K
     #define STEALTHCHOP_U
     #define STEALTHCHOP_V
     #define STEALTHCHOP_W
-    #define STEALTHCHOP_E
+    //#define STEALTHCHOP_E // default enabled; E stays spreadCycle as before
   #endif
 
   /**
@@ -3525,7 +3525,7 @@
    * Define your own with:
    * { <off_time[1..15]>, <hysteresis_end[-3..12]>, hysteresis_start[1..8] }
    */
-  #define CHOPPER_TIMING CHOPPER_DEFAULT_12V        // All axes (override below)
+  #define CHOPPER_TIMING CHOPPER_DEFAULT_24V        // All axes (override below). Default CHOPPER_DEFAULT_12V
   //#define CHOPPER_TIMING_X  CHOPPER_TIMING        // For X Axes (override below)
   //#define CHOPPER_TIMING_X2 CHOPPER_TIMING_X
   //#define CHOPPER_TIMING_Y  CHOPPER_TIMING        // For Y Axes (override below)
@@ -3562,7 +3562,7 @@
    * M912 - Clear stepper driver overtemperature pre-warn condition flag.
    * M122 - Report driver parameters (Requires TMC_DEBUG)
    */
-  //#define MONITOR_DRIVER_STATUS
+  #define MONITOR_DRIVER_STATUS
 
   #if ENABLED(MONITOR_DRIVER_STATUS)
     #define CURRENT_STEP_DOWN     50  // (mA) Do not exceed the desired minimum current
@@ -3579,13 +3579,13 @@
    * STEALTHCHOP_(XY|Z|E) must be enabled to use HYBRID_THRESHOLD.
    * M913 X/Y/Z/E to live tune the setting
    */
-  //#define HYBRID_THRESHOLD
+  #define HYBRID_THRESHOLD
 
   #define X_HYBRID_THRESHOLD     100  // (mm/s)
   #define X2_HYBRID_THRESHOLD    100
   #define Y_HYBRID_THRESHOLD     100
   #define Y2_HYBRID_THRESHOLD    100
-  #define Z_HYBRID_THRESHOLD       3
+  #define Z_HYBRID_THRESHOLD       5 // default 3
   #define Z2_HYBRID_THRESHOLD      3
   #define Z3_HYBRID_THRESHOLD      3
   #define Z4_HYBRID_THRESHOLD      3
@@ -3595,7 +3595,7 @@
   #define U_HYBRID_THRESHOLD       3  // (mm/s)
   #define V_HYBRID_THRESHOLD       3
   #define W_HYBRID_THRESHOLD       3
-  #define E0_HYBRID_THRESHOLD     30
+  #define E0_HYBRID_THRESHOLD     20 // default 30
   #define E1_HYBRID_THRESHOLD     30
   #define E2_HYBRID_THRESHOLD     30
   #define E3_HYBRID_THRESHOLD     30
@@ -3682,7 +3682,7 @@
    * Enable M122 debugging command for TMC stepper drivers.
    * M122 S0/1 will enable continuous reporting.
    */
-  //#define TMC_DEBUG
+  #define TMC_DEBUG
 
   /**
    * You can set your own advanced settings by filling in predefined functions.
