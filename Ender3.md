@@ -238,6 +238,29 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 pio run -e LPC1768
 ```
 
+## Flashing (SD card, no host needed)
+
+The SKR 1.3 (LPC1768) flashes itself from the onboard SD slot:
+
+1. Copy `.pio\build\LPC1768\firmware.bin` to the **root of a small
+   FAT32 SD card** (4-8 GB is most reliable; the LPC1768 bootloader
+   is picky about cards). Ideally the card contains only
+   `firmware.bin`.
+2. Power off the printer, insert the card into the **onboard SD slot**
+   (the same slot used for printing).
+3. Power on. The bootloader flashes the firmware and **renames the
+   file to `FIRMWARE.CUR`** when done - that rename is the success
+   indicator. Takes ~10-30 s; the LCD may stay dark during this.
+4. Power off, remove the card (or delete `firmware.bin`), insert the
+   printing SD card, power on. First boot auto-initializes EEPROM
+   (`EEPROM_INIT_NOW`) and the display shows "Ender-3".
+5. If the flash fails (no `.CUR` rename, blank screen): try a
+   different/smaller SD card. Do not interrupt power during the flash.
+
+Note: every re-flash wipes tuned EEPROM values (MPC model, bed PID,
+probe offset, E-steps) because of `EEPROM_INIT_NOW` - comment it out
+once tuning is done.
+
 ## After flashing (operational)
 
 1. EEPROM: `EEPROM_INIT_NOW` (in the plan) auto-initializes EEPROM on
