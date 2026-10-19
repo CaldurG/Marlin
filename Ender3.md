@@ -64,7 +64,13 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
   LCD-guided probe Z-offset calibration: probes the bed, then a paper
   test at the same spot, and sets M851 Z automatically
 - `Z_CLEARANCE_FOR_HOMING 4` (old name: `Z_HOMING_HEIGHT`)
+- `Z_AFTER_HOMING 10` (uncomment, ~line 1938) — lift Z to 10 mm after
+  homing instead of parking at the bed; easier nozzle access and less
+  probe-collision risk
 - `Z_SAFE_HOMING` (uncomment; recommended with probe homing)
+- `NO_MOTION_BEFORE_HOMING` (uncomment, ~line 1925) — inhibit G-code
+  moves until all axes are homed; safety net against SD files that
+  assume a known position
 
 ### Bed leveling
 
@@ -91,17 +97,32 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
 ### Thermal
 
-- `DEFAULT_KP 18.02`, `DEFAULT_KI 1.21`, `DEFAULT_KD 67.11` (Ender-3 PID)
-- `HEATER_0_MAXTEMP 290`
-- `PID_EDIT_MENU` (uncomment) — edit PID values from the LCD
-- `PID_AUTOTUNE_MENU` (uncomment) — run M303 autotune from the LCD
-  (useful since the printer is never connected to a host)
+- `MPCTEMP` (uncomment, ~line 715) — Model Predictive Control replaces
+  PID for the hotend (PID was overshooting). Keep `PIDTEMP` commented
+  (they are mutually exclusive). Requires:
+  - `MPC_AUTOTUNE` (uncomment) — `M306 T` measures the hotend model
+  - `MPC_HEATER_POWER { 40.0f }` — Ender 3 stock 40 W cartridge
+  - `MPC_INCLUDE_FAN` (default on) — models part-fan cooling
+  - `MPC_AUTOTUNE_MENU` (uncomment, ~line 741) — run `M306 T` from the
+    LCD (no host available)
+  - After flashing: run `M306 T` once at ~215 °C, then `M500`
+  - Set filament heat capacity per material if needed:
+    `M306 H0.0056` (PLA), `H0.0036` (PETG)
+- `HEATER_0_MAXTEMP 300` (stock 275; old config 290) — the thermistor
+  table (EPCOS 100k, type 1) goes up to 320 °C; 300 leaves headroom
+  under the table limit while covering any filament you'd run through
+  a stock Ender 3 hotend
+- `PID_EDIT_MENU` / `PID_AUTOTUNE_MENU` — DROP (PID no longer used for
+  the hotend; M303 does not apply to MPC)
 - Preheat 1: `"PLA"` 210 / 55
 - Preheat 2: `"PETG"` 240 / 80
 
 ### Features
 
 - `EEPROM_SETTINGS` (uncomment)
+- `EEPROM_INIT_NOW` (uncomment, ~line 2537) — init EEPROM automatically
+  on the first boot after flashing a new build; replaces the manual
+  `M502` + `M500` step after each re-flash during tuning
 - `SDSUPPORT` (uncomment)
 - `CR10_STOCKDISPLAY` (uncomment)
 - `NOZZLE_PARK_FEATURE` (uncomment)
@@ -109,18 +130,27 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 - Buzzer off (leave `LCD_FEEDBACK_FREQUENCY_*` unset)
 - `INDIVIDUAL_AXIS_HOMING_MENU` — leave OFF (old config had it; not
   wanted, "Home All" is enough)
+- `LCD_INFO_MENU` — leave OFF (considered; read-only info pages, not
+  needed)
 
 ## Configuration_adv.h
 
 ### SD card
 
-- `SD_DETECT_STATE HIGH` (uncomment; 2.1.x replacement for old
-  `SD_DETECT_INVERTED`) — the old config had this enabled, likely needed
-  for SD detection on this board. If the card is detected fine without it,
-  leave it off.
+- `SDCARD_CONNECTION ONBOARD` (uncomment, ~line 2084) — the SD card in
+  the **onboard slot on the SKR 1.3 board** is used, not the LCD's slot.
+  Without this the pins default to the LCD card reader and the onboard
+  card won't mount.
+- `SD_DETECT_STATE HIGH` — DROP this entry: with `SDCARD_CONNECTION
+  ONBOARD` on LPC1768, the firmware undefines `SD_DETECT_PIN` entirely
+  (the onboard slot is shared as a USB mass-storage drive; the LCD gets
+  mount/unmount menu entries instead of card detect). The old config's
+  `SD_DETECT_INVERTED` applied to the LCD-slot wiring and is not needed.
 - `SDCARD_SORT_ALPHA` (uncomment, ~line 1937) — sort SD file list
   alphabetically instead of FAT order; enable `SDSORT_USES_RAM` for
   fast sorting (LPC1768 has the RAM for it)
+- `SD_CHECK_AND_RETRY` (uncomment, Configuration.h ~line 2784) — CRC
+  checks and retries on SD reads; cheap insurance for SD-only printing
 - `SCROLL_LONG_FILENAMES` (uncomment, ~line 1955) — scroll long
   filenames in the SD menu instead of truncating them
 
@@ -190,8 +220,9 @@ pio run -e LPC1768
 ## After flashing (operational)
 
 1. `M502` then `M500` — reset EEPROM to new defaults
-2. `M303 E0 S215` — PID autotune hotend, then `M500`
-3. `M303 E-1 S60` — PID autotune bed, then `M500`
+2. `M306 T` — MPC autotune hotend (heats to ~215 °C at bed center and
+   measures the model; run from LCD via MPC_AUTOTUNE_MENU), then `M500`
+3. `M303 E-1 S60` — PID autotune bed (bed stays bang-bang/PID), then `M500`
 4. Probe Z-offset calibration (`M851 Z` / paper test), then `M500`
 5. E-steps calibration (`M92 E`), then `M500`
 6. Verify axis directions; flip `INVERT_*_DIR` if any axis runs backwards
