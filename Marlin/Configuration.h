@@ -2566,14 +2566,18 @@
 
 //
 // Preheat Constants - Up to 10 are supported without changes
+// Preheat menu items disabled: with no PREHEAT_n_LABEL defined,
+// PREHEAT_COUNT becomes 0 and all preheat menu items disappear.
+// The TEMP values are kept (unlabeled) because PID_AUTOTUNE_MENU
+// uses PREHEAT_1_TEMP_BED as the bed autotune default.
 //
-#define PREHEAT_1_LABEL       "PLA"
+//#define PREHEAT_1_LABEL       "PLA"
 #define PREHEAT_1_TEMP_HOTEND 210 // default 180
 #define PREHEAT_1_TEMP_BED     55 // default 70
 #define PREHEAT_1_TEMP_CHAMBER 35
 #define PREHEAT_1_FAN_SPEED     0 // Value from 0 to 255
 
-#define PREHEAT_2_LABEL       "PETG" // default "ABS"
+//#define PREHEAT_2_LABEL       "ABS"
 #define PREHEAT_2_TEMP_HOTEND 240
 #define PREHEAT_2_TEMP_BED     80 // default 110
 #define PREHEAT_2_TEMP_CHAMBER 35

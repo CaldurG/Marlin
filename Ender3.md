@@ -135,8 +135,14 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
   a stock Ender 3 hotend
 - `PID_EDIT_MENU` / `PID_AUTOTUNE_MENU` — DROP (PID no longer used for
   the hotend; M303 does not apply to MPC)
-- Preheat 1: `"PLA"` 210 / 55
-- Preheat 2: `"PETG"` 240 / 80
+- Preheat presets — DISABLED in the menu: `PREHEAT_1_LABEL` /
+  `PREHEAT_2_LABEL` commented out (~line 2568). With no LABEL defined,
+  `PREHEAT_COUNT` becomes 0 and all preheat menu items disappear
+  (Temperature menu, Configuration → Preheat Settings, filament-change
+  presets, UBL preheat). The `PREHEAT_*_TEMP_*` values stay defined
+  (unlabeled) because `PID_AUTOTUNE_MENU` uses `PREHEAT_1_TEMP_BED`
+  (55 °C) as the bed autotune default. Set hotend/bed temps directly
+  in the Temperature menu instead.
 
 ### Features
 
@@ -281,7 +287,8 @@ once tuning is done.
    then a paper test at the same spot; sets `M851 Z` automatically),
    then `M500`
 5. E-steps calibration (no host needed, all from the LCD + SD card):
-   - Heat the hotend to printing temp (Prepare → Preheat PLA)
+   - Heat the hotend to printing temp (Temperature menu → set Nozzle
+     to ~215 °C; preheat presets are disabled)
    - Use the LCD to extrude slowly until filament flows, then mark the
      filament ~120 mm above the extruder inlet (e.g. with a ruler)
    - Extrude 100 mm from the LCD: Prepare → Move Axis → Extruder
