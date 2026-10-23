@@ -21,8 +21,9 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
 ### Motion
 
-- `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 415 }` (E: 415 for Titan direct
-  drive; old config had 430 — calibrate after flashing)
+- `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 830 }` (E: ~830 for Titan direct
+  drive with the new LDO-42STH25-1404MAC 0.9° motor — exactly double the 1.8°
+  value of 415 (0.9° = 400 full steps/rev); calibrate after flashing)
 - `DEFAULT_MAX_FEEDRATE { 100, 100, 5, 50 }`
 - `DEFAULT_MAX_ACCELERATION { 500, 500, 100, 5000 }`
 - `DEFAULT_ACCELERATION 500`
@@ -206,8 +207,13 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 - `X_CURRENT 600`, `X_MICROSTEPS 16`, `X_RSENSE 0.11`
 - `Y_CURRENT 600`, `Y_MICROSTEPS 16`, `Y_RSENSE 0.11`
 - `Z_CURRENT 600`, `Z_MICROSTEPS 16`, `Z_RSENSE 0.11`
-- `E0_CURRENT 700`, `E0_MICROSTEPS 16`, `E0_RSENSE 0.11`
-  (may need a bump for Titan direct drive — increase if it skips)
+- `E0_CURRENT 800`, `E0_MICROSTEPS 16`, `E0_RSENSE 0.11`
+  — motor: LDO-42STH25-1404MAC (Slim Power pancake, 0.9°, rated 1.4 A/phase,
+  2.4 Ω, 5.5 mH, holding torque ≥18 N·cm, CW rotation; spec sheet:
+  <https://www.bondtech.se/wp-content/uploads/2019/08/SLIM_POWER_LDO-42STH25-1404MAC_RevA.pdf>).
+  800 mA = 57% of rated — safe; headroom to ~1.1 A (85%) if the Titan skips
+  steps. Torque is low (pancake) — if under-extrusion appears, raise current
+  first. CW motor: flip `INVERT_E0_DIR` if it extrudes backwards
 - `STEALTHCHOP_XY` (uncomment; Z and E stay spreadCycle, as before)
 - `CHOPPER_TIMING CHOPPER_DEFAULT_24V`
 - `MONITOR_DRIVER_STATUS` (uncomment) with:
@@ -296,7 +302,8 @@ once tuning is done.
    - Measure the remaining distance from the mark to the inlet
      (`used = 120 − remaining`)
    - New E-steps = current E-steps × 100 / used
-     (current value: 415 from the plan; check with `M503` or the
+     (current value: 830 from the plan — double the old 1.8° value of 415
+     for the 0.9° LDO motor; check with `M503` or the
      Configuration → Advanced Settings → Steps/mm menu)
    - Set it from the LCD: Configuration → Advanced Settings →
      Steps/mm → E0 (if the Steps/mm menu is enabled), or put
@@ -338,9 +345,13 @@ once tuning is done.
    bulges at line starts, too-high K shows gaps at line ends; the best
    K is where both ends look clean. The generated `.gcode` goes
    straight on the SD card. K is filament-specific — retest when
-   switching materials.
+   switching materials. Also retest after the 0.9° extruder motor swap:
+   doubled E resolution can shift the best K slightly.
 9. Motion tuning (all runtime-editable, save with `M500`):
     - `M203 X100 Y100 Z5 E50` — max feedrates (mm/s)
+    - Note: at 830 steps/mm, E50 = ~41.5k steps/s — fine for LPC1768, but
+      if fast retracts stutter, lower E feedrate (e.g. E25) or drop
+      `E0_MICROSTEPS` to 8
     - `M201 X500 Y500 Z100 E5000` — max accelerations (mm/s²)
     - `M204 P500 R500 T500` — print / retract / travel acceleration
     - `M503` — report current values

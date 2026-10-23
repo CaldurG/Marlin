@@ -1374,7 +1374,7 @@
  * Override with M92 (when enabled below)
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 415 } // default { 80, 80, 400, 500 }; E: 415 for Titan direct drive
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 830 } // default { 80, 80, 400, 500 }; E: ~830 for Titan direct drive with LDO-42STH25-1404MAC 0.9° motor (double the 1.8° value of 415)
 
 /**
  * Enable support for M92. Disable to save at least ~530 bytes of flash.

@@ -3345,7 +3345,7 @@
   #endif
 
   #if AXIS_IS_TMC_CONFIG(E0)
-    #define E0_CURRENT      700 // default 800; may need a bump for Titan direct drive — increase if it skips
+    #define E0_CURRENT      800 // default 800; LDO-42STH25-1404MAC 0.9° pancake (rated 1.4 A) — headroom to ~1.1 A if it skips
     #define E0_MICROSTEPS    16
     #define E0_RSENSE         0.11
     #define E0_CHAIN_POS     -1
