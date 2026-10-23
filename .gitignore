@@ -185,3 +185,6 @@ sqlite*.db
 .zed/
 *mcp*.db
 github-app.yml
+
+# graphify knowledge graph
+graphify-out/

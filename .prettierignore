@@ -1,4 +1,5 @@
 # Prettier Ignore file
+
 *.min.js
 web-ui/
 buildroot/share/PlatformIO/boards
