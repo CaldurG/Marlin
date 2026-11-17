@@ -6,6 +6,12 @@ Ported from the working `skr1.3` branch (Marlin 2.0.x, 2022) to `bugfix-2.1.x`
 on branch `skr1.3_marlin2.1`. Hardware: Ender 3 + BTT SKR 1.3, TMC2208 (UART),
 BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
+**Extruder motor (current):** LDO-42STH25-1404MAC "Slim Power" pancake, 0.9°
+(400 full steps/rev), rated 1.4 A/phase — E-steps **830**, `E0_CURRENT 800`.
+**Stock Ender 3 motor (original values, for reference):** 1.8° (200 full
+steps/rev) — E-steps **415**, `E0_CURRENT 700`. If the stock motor is ever
+reinstalled, halve E-steps back to 415 (and consider lowering the current).
+
 ## Configuration.h
 
 ### Identity & serial
@@ -22,8 +28,9 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 ### Motion
 
 - `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 830 }` (E: ~830 for Titan direct
-  drive with the new LDO-42STH25-1404MAC 0.9° motor — exactly double the 1.8°
-  value of 415 (0.9° = 400 full steps/rev); calibrate after flashing)
+  drive with the LDO-42STH25-1404MAC 0.9° motor — exactly double the 1.8°
+  value of 415 (0.9° = 400 full steps/rev); stock Ender 3 1.8° motor
+  reference value: 415; calibrate after flashing)
 - `DEFAULT_MAX_FEEDRATE { 100, 100, 5, 50 }`
 - `DEFAULT_MAX_ACCELERATION { 500, 500, 100, 5000 }`
 - `DEFAULT_ACCELERATION 500`
@@ -213,7 +220,8 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
   <https://www.bondtech.se/wp-content/uploads/2019/08/SLIM_POWER_LDO-42STH25-1404MAC_RevA.pdf>).
   800 mA = 57% of rated — safe; headroom to ~1.1 A (85%) if the Titan skips
   steps. Torque is low (pancake) — if under-extrusion appears, raise current
-  first. CW motor: flip `INVERT_E0_DIR` if it extrudes backwards
+  first. CW motor: flip `INVERT_E0_DIR` if it extrudes backwards.
+  Stock Ender 3 motor reference: 1.8°, original `E0_CURRENT 700`
 - `STEALTHCHOP_XY` (uncomment; Z and E stay spreadCycle, as before)
 - `CHOPPER_TIMING CHOPPER_DEFAULT_24V`
 - `MONITOR_DRIVER_STATUS` (uncomment) with:
@@ -303,7 +311,8 @@ once tuning is done.
      (`used = 120 − remaining`)
    - New E-steps = current E-steps × 100 / used
      (current value: 830 from the plan — double the old 1.8° value of 415
-     for the 0.9° LDO motor; check with `M503` or the
+     for the 0.9° LDO motor; stock Ender 3 1.8° motor reference: 415;
+     check with `M503` or the
      Configuration → Advanced Settings → Steps/mm menu)
    - Set it from the LCD: Configuration → Advanced Settings →
      Steps/mm → E0 (if the Steps/mm menu is enabled), or put
