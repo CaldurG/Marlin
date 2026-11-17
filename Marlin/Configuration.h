@@ -2388,7 +2388,7 @@
  * Add a bed leveling sub-menu for ABL or MBL.
  * Include a guided procedure if manual probing is enabled.
  */
-//#define LCD_BED_LEVELING // not needed: with an automatic probe the "Probe and Level" menu (G29, on/off toggle) appears via HAS_LEVELING; LCD_BED_LEVELING only adds the guided procedure for manual leveling
+#define LCD_BED_LEVELING // guided manual leveling procedure in the "Probe and Level" menu; useful even with BLTouch for paper-test verification/tramming
 
 #if ENABLED(LCD_BED_LEVELING)
   #define MESH_EDIT_Z_STEP  0.025 // (mm) Step size while manually probing Z axis.
