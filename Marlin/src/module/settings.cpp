@@ -36,7 +36,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V90"
+#define EEPROM_VERSION "V91"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -46,10 +46,22 @@
 
 #include "settings.h"
 
+#if ENABLED(NOVIN3DP_GALAXY_UI)
+  #include "../lcd/tft/galaxy/gx_core.h"
+#endif
+
 #include "endstops.h"
 #include "planner.h"
 #include "stepper.h"
 #include "temperature.h"
+
+#if ENABLED(MKS_WIFI_MODULE)
+  #include "../feature/mks_wifi/wifi_module.h"
+#endif
+
+#if ENABLED(CREALITY_RTS)
+  #include "../lcd/rts/lcd_rts.h"
+#endif
 
 #include "../lcd/marlinui.h"
 #include "../libs/vector_3.h"   // for matrix_3x3
@@ -107,7 +119,9 @@
   #include "../feature/power_monitor.h"
 #endif
 
-#include "../feature/pause.h"
+#if ENABLED(CONFIGURE_FILAMENT_CHANGE)
+  #include "../feature/pause.h"
+#endif
 
 #if ENABLED(BACKLASH_COMPENSATION)
   #include "../feature/backlash.h"
@@ -447,6 +461,10 @@ typedef struct SettingsDataStruct {
   //
   uint8_t lcd_brightness;                               // M256 B
 
+  #if ENABLED(NOVIN3DP_GALAXY_UI)
+    xyze_feedrate_t gx_manual_feedrate_mm_m;            // Galaxy UI manual move feedrates (mm/min)
+  #endif
+
   //
   // Display Sleep
   //
@@ -472,7 +490,7 @@ typedef struct SettingsDataStruct {
   //
   // FWRETRACT
   //
-  fwretract_settings_t fwretract_settings;              // M207 S F Z W, M208 S F W R
+  fwretract_settings_t fwretract_settings;              // M207 S F W Z, M208 S F W R
   bool autoretract_enabled;                             // M209 S
 
   //
@@ -501,6 +519,9 @@ typedef struct SettingsDataStruct {
   //
   per_stepper_uint16_t tmc_stepper_current;             // M906 X Y Z...
   per_stepper_uint32_t tmc_hybrid_threshold;            // M913 X Y Z...
+  #if ENABLED(HOMING_HYBRID_THRESHOLD)
+    homing_hybrid_thrs_t homing_hybrid_thrs;            // M913 H X Y Z...
+  #endif
   mot_stepper_int16_t tmc_sgt;                          // M914 X Y Z...
   per_stepper_bool_t tmc_stealth_enabled;               // M569 X Y Z...
 
@@ -552,7 +573,7 @@ typedef struct SettingsDataStruct {
   #endif
 
   //
-  // ADVANCED_PAUSE_FEATURE
+  // CONFIGURE_FILAMENT_CHANGE
   //
   #if ENABLED(CONFIGURE_FILAMENT_CHANGE)
     fil_change_settings_t fc_settings[EXTRUDERS];       // M603 T U L
@@ -695,7 +716,7 @@ typedef struct SettingsDataStruct {
   // Nonlinear Extrusion
   //
   #if ENABLED(NONLINEAR_EXTRUSION)
-    nonlinear_settings_t stepper_ne_settings;           // M592 S A B C
+    NonlinearSettings stepper_ne_settings;              // M592 S A B C
   #endif
 
   //
@@ -720,6 +741,21 @@ typedef struct SettingsDataStruct {
   //
   #if ENABLED(GCODE_MACROS_IN_EEPROM)
     char gcode_macros[GCODE_MACROS_SLOTS][GCODE_MACROS_SLOT_SIZE + 1];
+  #endif
+
+  //
+  // MKS_WIFI_MODULE
+  //
+  #if ENABLED(MKS_WIFI_MODULE)
+    mks_wifi_settings_t mks_wifi_settings;              // M587 S P
+  #endif
+
+  //
+  // Creality RTS
+  //
+  #if ENABLED(CREALITY_RTS)
+    bool wifi_enable_flag;        // M194 S
+    bool rts_sound_on;            // Screen sound button
   #endif
 
 } SettingsData;
@@ -1356,6 +1392,11 @@ void MarlinSettings::postprocess() {
       EEPROM_WRITE(lcd_brightness);
     }
 
+    #if ENABLED(NOVIN3DP_GALAXY_UI)
+      _FIELD_TEST(gx_manual_feedrate_mm_m);
+      EEPROM_WRITE(gx_manual_feedrate_mm_m);
+    #endif
+
     //
     // LCD Backlight / Sleep Timeout
     //
@@ -1528,6 +1569,14 @@ void MarlinSettings::postprocess() {
       #endif
       EEPROM_WRITE(tmc_hybrid_threshold);
     }
+
+    //
+    // TMC Homing Hybrid Threshold
+    //
+    #if ENABLED(HOMING_HYBRID_THRESHOLD)
+      _FIELD_TEST(homing_hybrid_thrs);
+      EEPROM_WRITE(homing_hybrid_thrs);
+    #endif
 
     //
     // TMC StallGuard threshold
@@ -1789,6 +1838,12 @@ void MarlinSettings::postprocess() {
       EEPROM_WRITE(ui.language);
     #endif
 
+    #if ENABLED(CREALITY_RTS)
+      _FIELD_TEST(wifi_enable_flag);
+      EEPROM_WRITE(wifi_enable_flag);
+      EEPROM_WRITE(rts_sound_on);
+    #endif
+
     //
     // Model predictive control
     //
@@ -1859,6 +1914,14 @@ void MarlinSettings::postprocess() {
     #if ENABLED(GCODE_MACROS_IN_EEPROM)
       _FIELD_TEST(gcode_macros);
       EEPROM_WRITE(gcode.macros);
+    #endif
+
+    //
+    // MKS WiFi module
+    //
+    #if ENABLED(MKS_WIFI_MODULE)
+      _FIELD_TEST(mks_wifi_settings);
+      EEPROM_WRITE(mks_wifi);
     #endif
 
     //
@@ -1934,7 +1997,7 @@ void MarlinSettings::postprocess() {
     EEPROM_Error eeprom_error = ERR_EEPROM_NOERR;
 
     const EEPROM_Error check = check_version();
-    if (check == ERR_EEPROM_NOPROM) return eeprom_error;
+    if (check == ERR_EEPROM_NOPROM) return check; // Nothing loaded, so the caller must apply defaults
 
     uint16_t stored_crc;
 
@@ -2462,6 +2525,15 @@ void MarlinSettings::postprocess() {
         TERN_(HAS_LCD_BRIGHTNESS, if (!validating) ui.brightness = lcd_brightness);
       }
 
+      #if ENABLED(NOVIN3DP_GALAXY_UI)
+      {
+        xyze_feedrate_t gx_fr;
+        _FIELD_TEST(gx_manual_feedrate_mm_m);
+        EEPROM_READ(gx_fr);
+        if (!validating) gx_manual_feedrate_mm_m = gx_fr;
+      }
+      #endif
+
       //
       // LCD Backlight / Sleep Timeout
       //
@@ -2632,6 +2704,18 @@ void MarlinSettings::postprocess() {
           }
         #endif
       }
+
+      //
+      // TMC Homing Hybrid Threshold
+      //
+      #if ENABLED(HOMING_HYBRID_THRESHOLD)
+        {
+          homing_hybrid_thrs_t homing_hybrid_thrs_in;
+          _FIELD_TEST(homing_hybrid_thrs);
+          EEPROM_READ(homing_hybrid_thrs_in);
+          if (!validating) homing_hybrid_thrs = homing_hybrid_thrs_in;
+        }
+      #endif
 
       //
       // TMC StallGuard threshold.
@@ -2938,6 +3022,12 @@ void MarlinSettings::postprocess() {
       }
       #endif
 
+      #if ENABLED(CREALITY_RTS)
+        _FIELD_TEST(wifi_enable_flag);
+        EEPROM_READ(wifi_enable_flag);
+        EEPROM_READ(rts_sound_on);
+      #endif
+
       //
       // Model predictive control
       //
@@ -3057,6 +3147,14 @@ void MarlinSettings::postprocess() {
       #endif
 
       //
+      // MKS WiFi module
+      //
+      #if ENABLED(MKS_WIFI_MODULE)
+        _FIELD_TEST(mks_wifi_settings);
+        EEPROM_READ(mks_wifi);
+      #endif
+
+      //
       // Validate Final Size and CRC
       //
       const uint16_t eeprom_total = eeprom_index - (EEPROM_OFFSET);
@@ -3158,7 +3256,8 @@ void MarlinSettings::postprocess() {
     #endif
     validating = false;
 
-    if (err) ui.eeprom_alert(err);
+    // A missing EEPROM was already reported, and can't be fixed from the LCD
+    if (err && err != ERR_EEPROM_NOPROM) ui.eeprom_alert(err);
 
     return (err == ERR_EEPROM_NOERR);
   }
@@ -3193,13 +3292,16 @@ void MarlinSettings::postprocess() {
     }
 
     // Otherwise reset settings to default "factory settings"
-    reset();
 
-    // Options to overwrite the EEPROM on error
     #if ANY(EEPROM_AUTO_INIT, EEPROM_INIT_NOW)
-      (void)init_eeprom();
-      LCD_MESSAGE(MSG_EEPROM_INITIALIZED);
-      SERIAL_ECHO_MSG(STR_EEPROM_INITIALIZED);
+      // Overwrite the EEPROM data on error. Defaults are applied even if it can't be written.
+      if (init_eeprom()) {
+        LCD_MESSAGE(MSG_EEPROM_INITIALIZED);
+        SERIAL_ECHO_MSG(STR_EEPROM_INITIALIZED);
+      }
+    #else
+      // The user can write settings to EEPROM later
+      reset();
     #endif
 
     return false;
@@ -3305,13 +3407,15 @@ void MarlinSettings::postprocess() {
         #endif
 
         #if ENABLED(DWIN_LCD_PROUI)
-          status = !bedLevelTools.meshValidate();
-          if (status) {
-            bedlevel.invalidate();
-            LCD_MESSAGE(MSG_UBL_MESH_INVALID);
+          if (!into) {  // Only validate the live mesh
+            status = !bedLevelTools.meshValidate();
+            if (status) {
+              bedlevel.invalidate();
+              LCD_MESSAGE(MSG_UBL_MESH_INVALID);
+            }
+            else
+              ui.status_printf(0, GET_TEXT_F(MSG_MESH_LOADED), slot);
           }
-          else
-            ui.status_printf(0, GET_TEXT_F(MSG_MESH_LOADED), bedlevel.storage_slot);
         #endif
 
         if (status) SERIAL_ECHOLNPGM("?Unable to load mesh data.");
@@ -3670,6 +3774,7 @@ void MarlinSettings::reset() {
   // LCD Brightness
   //
   TERN_(HAS_LCD_BRIGHTNESS, ui.brightness = LCD_BRIGHTNESS_DEFAULT);
+  TERN_(NOVIN3DP_GALAXY_UI, gx_reset_manual_feedrate());
 
   //
   // LCD Backlight / Sleep Timeout
@@ -3726,6 +3831,28 @@ void MarlinSettings::reset() {
       OPTITEM(W_HAS_HOME_CURRENT,  W_CURRENT_HOME)
     };
     homing_current_mA = base_homing_current_mA;
+  #endif
+
+  //
+  // TMC Homing Hybrid Threshold
+  //
+  #if ENABLED(HOMING_HYBRID_THRESHOLD)
+    homing_hybrid_thrs = {
+      OPTITEM(X_HAS_STEALTHCHOP,  X_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(Y_HAS_STEALTHCHOP,  Y_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(Z_HAS_STEALTHCHOP,  Z_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(X2_HAS_STEALTHCHOP, X2_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(Y2_HAS_STEALTHCHOP, Y2_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(Z2_HAS_STEALTHCHOP, Z2_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(Z3_HAS_STEALTHCHOP, Z3_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(Z4_HAS_STEALTHCHOP, Z4_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(I_HAS_STEALTHCHOP,  I_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(J_HAS_STEALTHCHOP,  J_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(K_HAS_STEALTHCHOP,  K_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(U_HAS_STEALTHCHOP,  U_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(V_HAS_STEALTHCHOP,  V_HOMING_HYBRID_THRESHOLD)
+      OPTITEM(W_HAS_STEALTHCHOP,  W_HOMING_HYBRID_THRESHOLD)
+    };
   #endif
 
   //
@@ -3791,6 +3918,12 @@ void MarlinSettings::reset() {
     static constexpr uint32_t tmp_motor_current_setting[] = DIGIPOT_MOTOR_CURRENT;
     for (uint8_t q = 0; q < COUNT(tmp_motor_current_setting); ++q)
       stepper.set_digipot_current(q, tmp_motor_current_setting[q]);
+  #endif
+
+  #if ENABLED(CREALITY_RTS)
+    ui.language = 1; // 0:Chinese, 1:English
+    wifi_enable_flag = true;
+    rts_sound_on = true;
   #endif
 
   //
@@ -3895,6 +4028,11 @@ void MarlinSettings::reset() {
   // G-code Macros
   //
   TERN_(GCODE_MACROS_IN_EEPROM, gcode.reset_macros());
+
+  //
+  // MKS WiFi module
+  //
+  TERN_(MKS_WIFI_MODULE, mks_wifi_reset_settings());
 
   //
   // Hotend Idle Timeout
@@ -4236,6 +4374,8 @@ void MarlinSettings::reset() {
       gcode.M554_report(forReplay);
     #endif
 
+    TERN_(MKS_WIFI_MODULE, gcode.M587_report(forReplay));
+
     TERN_(HAS_MULTI_LANGUAGE, gcode.M414_report(forReplay));
 
     //
@@ -4247,6 +4387,13 @@ void MarlinSettings::reset() {
     // MMU3
     //
     TERN_(HAS_PRUSA_MMU3, gcode.MMU3_report(forReplay));
+
+    #if ENABLED(CREALITY_RTS)
+      CONFIG_ECHO_HEADING("WIFI Enabled");
+      CONFIG_ECHO_MSG("  M194 S", wifi_enable_flag);
+      CONFIG_ECHO_HEADING("Screen Sound (set with the screen's sound button)");
+      CONFIG_ECHO_MSG("  ; ", rts_sound_on ? F("on") : F("off"));
+    #endif
   }
 
 #endif // !DISABLE_M503
