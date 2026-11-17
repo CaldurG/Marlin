@@ -12,6 +12,21 @@ BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 steps/rev) — E-steps **415**, `E0_CURRENT 700`. If the stock motor is ever
 reinstalled, halve E-steps back to 415 (and consider lowering the current).
 
+**Motor wiring — LDO vs stock (important!):** the two motors use a different
+connector pinout, and the extension cable must match the motor plugged into it:
+
+- **LDO (standard NEMA17 order):** straight cable — black, green, blue, red
+  (coil A = black+green on pins 1–2, coil B = blue+red on pins 3–4).
+- **Stock Creality motor:** the **middle two wires are crossed** in the
+  connector (black, blue, green, red) — the cable needs the middle two
+  positions swapped to match.
+
+Plugging the LDO into a cable wired for the stock motor (or vice versa) puts
+each driver output across half of both coils — the TMC2208 reports it as a
+short-to-ground and Marlin kills with **"Driver error"** immediately on the
+first move. This happened with the LDO + a Creality-pinned cable; a
+straight-pinned cable fixed it. Label the cables to avoid mixing them up.
+
 ## Configuration.h
 
 ### Identity & serial
@@ -221,6 +236,10 @@ reinstalled, halve E-steps back to 415 (and consider lowering the current).
   800 mA = 57% of rated — safe; headroom to ~1.1 A (85%) if the Titan skips
   steps. Torque is low (pancake) — if under-extrusion appears, raise current
   first. CW motor: flip `INVERT_E0_DIR` if it extrudes backwards.
+  Wiring: LDO uses the standard straight pinout (black-green-blue-red);
+  the stock Creality motor has the middle two wires crossed — see the
+  motor wiring note at the top of this file. A mismatched cable causes
+  an instant "Driver error" (TMC2208 short-to-ground detection).
   Stock Ender 3 motor reference: 1.8°, original `E0_CURRENT 700`
 - `STEALTHCHOP_XY` (uncomment; Z and E stay spreadCycle, as before)
 - `CHOPPER_TIMING CHOPPER_DEFAULT_24V`
