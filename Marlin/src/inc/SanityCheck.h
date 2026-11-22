@@ -1135,6 +1135,24 @@ static_assert(NUM_SERVOS <= NUM_SERVO_PLUGS, "NUM_SERVOS (or some servo index) i
 #endif
 
 /**
+ * PancakeBot
+ */
+#if ENABLED(PANCAKEBOT)
+  #if !PIN_EXISTS(PANCAKEBOT_WORKING_LED) || !PIN_EXISTS(PANCAKEBOT_SD_ERROR_LED)
+    #error "PANCAKEBOT requires PANCAKEBOT_WORKING_LED_PIN and PANCAKEBOT_SD_ERROR_LED_PIN."
+  #elif !HAS_MEDIA
+    #error "PANCAKEBOT requires SDSUPPORT."
+  #endif
+#endif
+#if ENABLED(PANCAKEBOT_PANEL)
+  #if !defined(DOGLCD_SCK) || !defined(DOGLCD_MOSI) || !defined(DOGLCD_CS) || !defined(DOGLCD_A0)
+    #error "PANCAKEBOT_PANEL requires DOGLCD_SCK, DOGLCD_MOSI, DOGLCD_CS, and DOGLCD_A0."
+  #elif !defined(BTN_UP) || !defined(BTN_DOWN) || !defined(BTN_ENC)
+    #error "PANCAKEBOT_PANEL requires BTN_UP, BTN_DOWN, and BTN_ENC."
+  #endif
+#endif
+
+/**
  * Synchronous M106/M107 checks
  */
 #if ENABLED(LASER_SYNCHRONOUS_M106_M107)
@@ -2343,6 +2361,15 @@ static_assert(NUM_SERVOS <= NUM_SERVO_PLUGS, "NUM_SERVOS (or some servo index) i
   #error "TEMP_SENSOR_BOARD 1000 requires BOARD_PULLUP_RESISTOR_OHMS, BOARD_RESISTANCE_25C_OHMS and BOARD_BETA in Configuration_adv.h."
 #elif TEMP_SENSOR_REDUNDANT_IS_CUSTOM && !(defined(REDUNDANT_PULLUP_RESISTOR_OHMS) && defined(REDUNDANT_RESISTANCE_25C_OHMS) && defined(REDUNDANT_BETA))
   #error "TEMP_SENSOR_REDUNDANT 1000 requires REDUNDANT_PULLUP_RESISTOR_OHMS, REDUNDANT_RESISTANCE_25C_OHMS and REDUNDANT_BETA in Configuration_adv.h."
+#endif
+
+/**
+ * Settle bands must not be wider than the hysteresis that ends them
+ */
+#if HAS_TEMP_HOTEND && TEMP_SETTLE_BAND > TEMP_HYSTERESIS
+  #error "TEMP_SETTLE_BAND must not be greater than TEMP_HYSTERESIS."
+#elif HAS_HEATED_BED && TEMP_BED_SETTLE_BAND > TEMP_BED_HYSTERESIS
+  #error "TEMP_BED_SETTLE_BAND must not be greater than TEMP_BED_HYSTERESIS."
 #endif
 
 /**

@@ -527,6 +527,8 @@
   #define _LCD_CONTRAST_MAX  254
 #elif ENABLED(MAKRPANEL)
   #define _LCD_CONTRAST_INIT  17
+#elif ENABLED(PANCAKEBOT_PANEL)
+  #define _LCD_CONTRAST_INIT  40
 #elif ENABLED(MINIPANEL)
   #define _LCD_CONTRAST_INIT 150
 #elif ENABLED(ZONESTAR_12864OLED)
@@ -2489,6 +2491,14 @@
 #if TEMP_SENSOR(BED)
   #define HAS_HEATED_BED 1
   #define HAS_TEMP_BED 1
+#endif
+
+// Heaters count time in range from when they come this close to their targets
+#if HAS_TEMP_HOTEND && !defined(TEMP_SETTLE_BAND)
+  #define TEMP_SETTLE_BAND TEMP_HYSTERESIS
+#endif
+#if HAS_HEATED_BED && !defined(TEMP_BED_SETTLE_BAND)
+  #define TEMP_BED_SETTLE_BAND TEMP_BED_HYSTERESIS
 #endif
 #if TEMP_SENSOR(CHAMBER)
   #define HAS_TEMP_CHAMBER 1
