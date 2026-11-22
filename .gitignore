@@ -191,3 +191,6 @@ github-app.yml
 
 # graphify knowledge graph
 graphify-out/
+
+# Local Copilot instructions
+.github/copilot-instructions.md
