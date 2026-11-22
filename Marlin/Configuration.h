@@ -1344,7 +1344,7 @@
  *
  * :[2,3,4,5,6,7]
  */
-//#define ENDSTOP_NOISE_THRESHOLD 2
+#define ENDSTOP_NOISE_THRESHOLD 2
 
 // Check for stuck or disconnected endstops during homing moves.
 //#define DETECT_BROKEN_ENDSTOP
@@ -1374,7 +1374,7 @@
  * Override with M92 (when enabled below)
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 830 } // default { 80, 80, 400, 500 }; E: ~830 for Titan direct drive with LDO-42STH25-1404MAC 0.9° motor (double the 1.8° value of 415)
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 860 } // default { 80, 80, 400, 500 }; E: ~860 for Titan direct drive with LDO-42STH25-1404MAC 0.9° motor (calibrated from the ~830 estimate; stock 1.8° motor reference: 415)
 
 /**
  * Enable support for M92. Disable to save at least ~530 bytes of flash.

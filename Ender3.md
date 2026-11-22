@@ -7,7 +7,8 @@ on branch `skr1.3_marlin2.1`. Hardware: Ender 3 + BTT SKR 1.3, TMC2208 (UART),
 BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
 **Extruder motor (current):** LDO-42STH25-1404MAC "Slim Power" pancake, 0.9°
-(400 full steps/rev), rated 1.4 A/phase — E-steps **830**, `E0_CURRENT 800`.
+(400 full steps/rev), rated 1.4 A/phase — E-steps **860** (calibrated),
+`E0_CURRENT 800`.
 **Stock Ender 3 motor (original values, for reference):** 1.8° (200 full
 steps/rev) — E-steps **415**, `E0_CURRENT 700`. If the stock motor is ever
 reinstalled, halve E-steps back to 415 (and consider lowering the current).
@@ -42,10 +43,10 @@ straight-pinned cable fixed it. Label the cables to avoid mixing them up.
 
 ### Motion
 
-- `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 830 }` (E: ~830 for Titan direct
-  drive with the LDO-42STH25-1404MAC 0.9° motor — exactly double the 1.8°
-  value of 415 (0.9° = 400 full steps/rev); stock Ender 3 1.8° motor
-  reference value: 415; calibrate after flashing)
+- `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 860 }` (E: 860 for Titan direct
+  drive with the LDO-42STH25-1404MAC 0.9° motor — calibrated from the
+  theoretical ~830 (double the 1.8° value of 415); stock Ender 3 1.8° motor
+  reference value: 415)
 - `DEFAULT_MAX_FEEDRATE { 100, 100, 5, 50 }`
 - `DEFAULT_MAX_ACCELERATION { 500, 500, 100, 5000 }`
 - `DEFAULT_ACCELERATION 500`
@@ -96,6 +97,27 @@ straight-pinned cable fixed it. Label the cables to avoid mixing them up.
 - `NO_MOTION_BEFORE_HOMING` (uncomment, ~line 1925) — inhibit G-code
   moves until all axes are homed; safety net against SD files that
   assume a known position
+
+### Endstops
+
+- `ENDSTOP_NOISE_THRESHOLD 2` (uncomment, ~line 1347; default:
+  commented out) — debounce the probe/endstop signal: a state change
+  must hold for N consecutive ~1 ms samples before it's accepted.
+  Added because the BLTouch clone occasionally false-triggers mid-air
+  (probe goes into alarm and stows on its own). Suspected cause:
+  electrical noise — possibly mains noise/voltage sags from a washing
+  machine sharing the printer's outlet. Safe for BLTouch (its trigger
+  signal is held, not pulsed). Raise to 3-4 if false triggers persist;
+  if they do persist, the noise is likely on the servo line or the
+  power supply — reroute the probe cable away from stepper/heater
+  wiring, check the extension-cable crimps, and try a different
+  outlet/circuit.
+- `ENDSTOP_INTERRUPTS_FEATURE` — leave OFF (default: commented out):
+  not an option on this board. All SKR 1.3 endstop connectors are on
+  GPIO port 1, and the LPC1768 only supports pin-change interrupts on
+  ports 0 and 2 — the build fails with "X_MIN_PIN is not
+  INTERRUPT-capable" if enabled. Marlin polls the endstops from the
+  temperature ISR instead, which works fine.
 
 ### Bed leveling
 
@@ -271,6 +293,25 @@ straight-pinned cable fixed it. Label the cables to avoid mixing them up.
   — motion planner blocks; smoother SD printing. LPC1768 has plenty of
   RAM for this
 
+### Motion quality
+
+- `ADAPTIVE_STEP_SMOOTHING` (uncomment, ~line 1507; default: commented
+  out) — oversamples the step ISR (2×/4×/8×...) on slow moves where the
+  step rate is below the ISR's comfortable limit, giving the Bresenham
+  math finer time resolution. Reduces aliasing between axes at low step
+  rates that causes audible motor whine and surface banding. No effect
+  on fast moves; no downside on the 120 MHz LPC1768. Complements
+  `MULTISTEPPING_LIMIT 16` (which handles the high-rate end).
+- `FT_MOTION` — leave OFF (default: commented out): Marlin's
+  fixed-time motion system with full input shaping (the Klipper-style
+  pipeline, beta). It compiles for LPC1768, but it's explicitly a beta
+  feature and can affect homing/probing — not worth introducing while
+  debugging the probe. If ringing is ever a problem, the lighter
+  standard-motion `INPUT_SHAPING_X`/`INPUT_SHAPING_Y` (just below the
+  FT_MOTION block) is the better-tested path. Note: enabling FT_MOTION
+  with `NO_STANDARD_MOTION` would force-disable
+  `ADAPTIVE_STEP_SMOOTHING` (they belong to different motion systems).
+
 ## Build & validate
 
 ```shell
@@ -329,8 +370,9 @@ once tuning is done.
    - Measure the remaining distance from the mark to the inlet
      (`used = 120 − remaining`)
    - New E-steps = current E-steps × 100 / used
-     (current value: 830 from the plan — double the old 1.8° value of 415
-     for the 0.9° LDO motor; stock Ender 3 1.8° motor reference: 415;
+     (current value: 860 from the plan — calibrated from the theoretical
+     ~830 (double the old 1.8° value of 415 for the 0.9° LDO motor);
+     stock Ender 3 1.8° motor reference: 415;
      check with `M503` or the
      Configuration → Advanced Settings → Steps/mm menu)
    - Set it from the LCD: Configuration → Advanced Settings →
@@ -377,7 +419,7 @@ once tuning is done.
    doubled E resolution can shift the best K slightly.
 9. Motion tuning (all runtime-editable, save with `M500`):
     - `M203 X100 Y100 Z5 E50` — max feedrates (mm/s)
-    - Note: at 830 steps/mm, E50 = ~41.5k steps/s — fine for LPC1768, but
+    - Note: at 860 steps/mm, E50 = ~43k steps/s — fine for LPC1768, but
       if fast retracts stutter, lower E feedrate (e.g. E25) or drop
       `E0_MICROSTEPS` to 8
     - `M201 X500 Y500 Z100 E5000` — max accelerations (mm/s²)
