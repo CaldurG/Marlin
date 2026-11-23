@@ -429,3 +429,22 @@ once tuning is done.
       print; back off when ringing/ghosting appears on surfaces
     - LCD: Configuration → Acceleration / Max Feedrate menus also edit
       these (saved with the "Store Settings" menu item)
+
+### Probing reliability
+
+- `PROBING_ESTEPPERS_OFF` (uncomment, Configuration.h ~line 1889;
+  default: commented out) — disable all extruder steppers during
+  probing. Removes extruder-motor electrical noise and vibration from
+  the measurement window; complements `ENDSTOP_NOISE_THRESHOLD 2` in
+  the fight against the clone's mid-air false triggers.
+- `DELAY_BEFORE_PROBING 200` (uncomment, Configuration.h ~line 1892;
+  default: commented out) — 200 ms settle delay after the probe
+  deploys and before Z starts moving down. Lets servo motion and any
+  residual frame vibration die out so it can't register as a trigger.
+  Costs 200 ms per probe point (a few seconds per mesh).
+- `BLTOUCH_DELAY 500` (uncomment, Configuration_adv.h ~line 991;
+  default: commented out) — minimum delay after each BLTouch servo
+  command before the next one is sent. The clone occasionally needs
+  more than the default command spacing to register a deploy/stow;
+  500 ms is the ANTClabs-recommended safe value. Makes each deploy /
+  stow / reset slightly slower but much more reliable.
