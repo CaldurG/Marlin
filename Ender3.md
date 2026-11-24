@@ -7,8 +7,8 @@ on branch `skr1.3_marlin2.1`. Hardware: Ender 3 + BTT SKR 1.3, TMC2208 (UART),
 BLTouch clone (3D Touch), Titan direct drive, CR10 stock display, SD printing.
 
 **Extruder motor (current):** LDO-42STH25-1404MAC "Slim Power" pancake, 0.9°
-(400 full steps/rev), rated 1.4 A/phase — E-steps **860** (calibrated),
-`E0_CURRENT 800`.
+(400 full steps/rev), rated 1.4 A/phase — E-steps **837** (Titan extruder
+recommended value), `E0_CURRENT 800`.
 **Stock Ender 3 motor (original values, for reference):** 1.8° (200 full
 steps/rev) — E-steps **415**, `E0_CURRENT 700`. If the stock motor is ever
 reinstalled, halve E-steps back to 415 (and consider lowering the current).
@@ -43,9 +43,8 @@ straight-pinned cable fixed it. Label the cables to avoid mixing them up.
 
 ### Motion
 
-- `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 860 }` (E: 860 for Titan direct
-  drive with the LDO-42STH25-1404MAC 0.9° motor — calibrated from the
-  theoretical ~830 (double the 1.8° value of 415); stock Ender 3 1.8° motor
+- `DEFAULT_AXIS_STEPS_PER_UNIT { 80, 80, 400, 837 }` (E: 837 for Titan direct
+  drive — the Titan extruder recommended value; stock Ender 3 1.8° motor
   reference value: 415)
 - `DEFAULT_MAX_FEEDRATE { 100, 100, 5, 50 }`
 - `DEFAULT_MAX_ACCELERATION { 500, 500, 100, 5000 }`
@@ -370,8 +369,7 @@ once tuning is done.
    - Measure the remaining distance from the mark to the inlet
      (`used = 120 − remaining`)
    - New E-steps = current E-steps × 100 / used
-     (current value: 860 from the plan — calibrated from the theoretical
-     ~830 (double the old 1.8° value of 415 for the 0.9° LDO motor);
+     (current value: 837 — the Titan extruder recommended value;
      stock Ender 3 1.8° motor reference: 415;
      check with `M503` or the
      Configuration → Advanced Settings → Steps/mm menu)
@@ -419,7 +417,7 @@ once tuning is done.
    doubled E resolution can shift the best K slightly.
 9. Motion tuning (all runtime-editable, save with `M500`):
     - `M203 X100 Y100 Z5 E50` — max feedrates (mm/s)
-    - Note: at 860 steps/mm, E50 = ~43k steps/s — fine for LPC1768, but
+    - Note: at 837 steps/mm, E50 = ~42k steps/s — fine for LPC1768, but
       if fast retracts stutter, lower E feedrate (e.g. E25) or drop
       `E0_MICROSTEPS` to 8
     - `M201 X500 Y500 Z100 E5000` — max accelerations (mm/s²)
