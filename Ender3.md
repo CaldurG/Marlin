@@ -217,13 +217,20 @@ straight-pinned cable fixed it. Label the cables to avoid mixing them up.
   (the onboard slot is shared as a USB mass-storage drive; the LCD gets
   mount/unmount menu entries instead of card detect). The old config's
   `SD_DETECT_INVERTED` applied to the LCD-slot wiring and is not needed.
-- `SDCARD_SORT_ALPHA` (uncomment, ~line 1937) — sort SD file list
-  alphabetically instead of FAT order; enable `SDSORT_USES_RAM` for
-  fast sorting (LPC1768 has the RAM for it)
+- `SDCARD_SORT_ALPHA` — **DISABLED (2025-11-25)**: caused a hard freeze
+  (stuck screen + beeping) at SD mount with any card holding 2+ files.
+  Root cause: with `SDSORT_USES_RAM true` + `SDSORT_CACHE_NAMES false` +
+  `SDSORT_USES_STACK false`, `CardReader::presort()` writes through the
+  `sortnames` pointer, which is declared but never allocated in this
+  combination (NULL deref → hard fault on LPC1768). Bug confirmed present
+  in upstream Marlin bugfix-2.1.x too. Re-enable only together with the
+  code fix (allocate `sortnames` whenever declared) or with
+  `SDSORT_CACHE_NAMES true` / `SDSORT_USES_STACK true`.
 - `SD_CHECK_AND_RETRY` (uncomment, Configuration.h ~line 2784) — CRC
   checks and retries on SD reads; cheap insurance for SD-only printing
-- `SCROLL_LONG_FILENAMES` (uncomment, ~line 1955) — scroll long
-  filenames in the SD menu instead of truncating them
+- `SCROLL_LONG_FILENAMES` — **DISABLED (2025-11-25)** as part of the
+  SD-freeze debugging sweep (default: commented out). Re-enable once
+  sorting is fixed and verified stable.
 
 ### Pause & park
 
